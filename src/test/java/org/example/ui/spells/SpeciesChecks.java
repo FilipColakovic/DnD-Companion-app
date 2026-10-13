@@ -87,7 +87,7 @@ public final class SpeciesChecks {
                 });
         System.out.println(
                 "Passed: PHB species grants at all levels, free casts, complete details and live"
-                    + " library updates.");
+                        + " library updates.");
     }
 
     private static void check(boolean condition, String message) {

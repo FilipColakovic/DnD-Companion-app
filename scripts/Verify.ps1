@@ -13,8 +13,11 @@ try {
         $java = Join-Path $JavaHome 'bin/java.exe'
         $javac = Join-Path $JavaHome 'bin/javac.exe'
     } else {
-        $java = (Get-Command java -ErrorAction Stop).Source
-        $javac = (Get-Command javac -ErrorAction Stop).Source
+        $java = (Get-Command java -ErrorAction SilentlyContinue).Source
+        $javac = (Get-Command javac -ErrorAction SilentlyContinue).Source
+        if (-not $java -or -not $javac) {
+            throw 'JDK 25 is missing from PATH. Pass -JavaHome or set JAVA_HOME to a complete JDK 25.'
+        }
     }
     if (-not (Test-Path $java) -or -not (Test-Path $javac)) {
         throw 'A complete JDK 25 is required. Pass -JavaHome or set JAVA_HOME.'
@@ -31,6 +34,12 @@ try {
     }
     $output = Join-Path $projectRoot 'target/verification'
     $classes = Join-Path $output 'classes'
+    $resolvedClasses = [System.IO.Path]::GetFullPath($classes)
+    $targetRoot = [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'target')) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $resolvedClasses.StartsWith($targetRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Refusing to clean a classes directory outside the project target directory.'
+    }
+    if (Test-Path $resolvedClasses) { Remove-Item -LiteralPath $resolvedClasses -Recurse -Force }
     New-Item -ItemType Directory -Force $classes | Out-Null
     [xml]$pom = Get-Content pom.xml
     $version = ($pom.project.dependencies.dependency | Where-Object artifactId -eq 'sqlite-jdbc').version

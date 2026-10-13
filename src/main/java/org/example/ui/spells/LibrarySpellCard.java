@@ -10,14 +10,13 @@ import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellDetails;
 import org.example.domain.spells.SpellSelection;
 import org.example.ui.common.AppStyle;
-import org.example.ui.spells.SpellLibraryComponents.SpellTitle;
+import org.example.ui.common.CardComponents;
 import org.example.ui.spells.SpellLibraryComponents.Wrap;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagLayout;
@@ -31,7 +30,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -70,20 +68,12 @@ final class LibrarySpellCard extends JPanel {
         card.setBorder(new EmptyBorder(10, 10, 14, 14));
         add(card);
         JPanel heading = AppStyle.section(new BorderLayout(8, 0));
-        JPanel tile = AppStyle.card(new BorderLayout());
-        tile.putClientProperty("surfaceRole", spell.level() > 0 ? "slotAvailable" : "low");
-        tile.putClientProperty("shadowOffset", 2);
-        tile.setBorder(new EmptyBorder(3, 3, 5, 5));
-        tile.setPreferredSize(new Dimension(44, 44));
-        JLabel level = AppStyle.mono("" + spell.level(), 20);
-        level.setHorizontalAlignment(SwingConstants.CENTER);
-        AppStyle.setColorRole(level, spell.level() > 0 ? "badgeText" : "ink");
-        tile.add(level);
+        JPanel tile = CardComponents.levelTile("" + spell.level(), spell.level() > 0, null);
         JPanel tileHolder = AppStyle.section(new FlowLayout(FlowLayout.LEFT, 0, 0));
         tileHolder.add(tile);
         heading.add(tileHolder, BorderLayout.WEST);
         JButton name =
-                new SpellTitle(
+                CardComponents.title(
                         spell.name().toUpperCase(Locale.ROOT), () -> inspect.accept(spell.name()));
         name.getAccessibleContext().setAccessibleName("Inspect " + spell.name());
         heading.add(name, BorderLayout.CENTER);
@@ -109,9 +99,7 @@ final class LibrarySpellCard extends JPanel {
                         + d.range()
                         + " | Components: "
                         + d.components());
-        JPanel strip = AppStyle.surfacePanel(new BorderLayout(), "low");
-        strip.setBorder(new EmptyBorder(4, 6, 4, 6));
-        strip.add(metadata);
+        JPanel strip = CardComponents.metadataStrip(metadata);
         row(card, strip);
         bindInspection(this);
     }

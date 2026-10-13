@@ -11,6 +11,7 @@ import org.example.ui.character.MetamagicPanel;
 import org.example.ui.common.AppStyle;
 import org.example.ui.spells.CastingPanel;
 import org.example.ui.spells.SpellDetailPanel;
+import org.example.ui.spells.SpellLibraryPanel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -339,10 +340,7 @@ public final class GrimoireChecks {
                     "Empty-character action opens spell selection");
             var library =
                     require(
-                            find(
-                                    empty,
-                                    org.example.ui.spells.SpellLibraryPanel.class,
-                                    c -> visibleWithin(c, empty)),
+                            find(empty, SpellLibraryPanel.class, c -> visibleWithin(c, empty)),
                             "Visible spell library");
             var search =
                     require(

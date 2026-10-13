@@ -6,6 +6,7 @@ import static org.example.ui.character.CharacterSheetComponents.labelled;
 import static org.example.ui.character.CharacterSheetComponents.metric;
 import static org.example.ui.character.CharacterSheetComponents.signed;
 
+import org.example.application.CharacterController;
 import org.example.domain.character.CharacterChoices;
 import org.example.domain.character.CharacterSheet;
 import org.example.domain.character.CharacterSheet.Ability;
@@ -49,7 +50,7 @@ import javax.swing.border.EmptyBorder;
 /** Live single-character sheet based on the supplied three-column Bauhaus editor. */
 public final class CharacterSheetPanel extends JPanel implements LiveView {
     private final GrimoirePanel workspace;
-    private final org.example.application.CharacterController editor;
+    private final CharacterController editor;
     private final PlaySession session;
     private final CharacterChoicesPanel choices;
     private final CharacterFormBindings bindings;
@@ -66,7 +67,6 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
     private final JPanel features = AppStyle.section(new GridBagLayout()),
             featList = AppStyle.section(new GridBagLayout());
     private final JButton innate, shortRest, longRest;
-    private final Runnable listener = this::refresh;
     private final PropertyChangeListener stateListener = event -> refresh();
     private boolean updating = true, disposed;
     private String featureSignature = "", featSignature = "";
@@ -211,8 +211,6 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         add(FeatComponents.scroll(content), BorderLayout.CENTER);
         saveControls = new CharacterSaveControls(editor, status, this::commit);
         add(saveControls, BorderLayout.SOUTH);
-        session.addListener(listener);
-        session.selection().addChangeListener(listener);
         editor.addPropertyChangeListener("characterState", stateListener);
         updating = false;
         refresh();
@@ -491,8 +489,6 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
 
     public void dispose() {
         disposed = true;
-        session.removeListener(listener);
-        session.selection().removeChangeListener(listener);
         editor.removePropertyChangeListener("characterState", stateListener);
     }
 }

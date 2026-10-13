@@ -123,6 +123,14 @@ public record CharacterSheet(Map<String, String> values) {
         return put("skill." + skill, Integer.toString(tier));
     }
 
+    public CharacterSheet withSkill(Skill skill, Proficiency proficiency) {
+        return withSkill(skill, proficiency.storedValue());
+    }
+
+    public Proficiency proficiency(Skill skill) {
+        return Proficiency.fromStoredValue(tier(skill));
+    }
+
     public CharacterSheet withField(Field field, int value) {
         return put("field." + field, Integer.toString(value));
     }
@@ -174,11 +182,11 @@ public record CharacterSheet(Map<String, String> values) {
     }
 
     public int skillBonus(Skill skill, int charisma, int proficiency) {
-        return modifier(score(skill.ability, charisma)) + tier(skill) * proficiency;
+        return SkillRules.bonus(score(skill.ability, charisma), proficiency, proficiency(skill));
     }
 
     public int skillBonus(Skill skill, int charisma, int proficiency, Set<Skill> granted) {
-        return modifier(score(skill.ability, charisma)) + tier(skill, granted) * proficiency;
+        return SkillRules.bonus(score(skill.ability, charisma), proficiency, tier(skill, granted));
     }
 
     public int armorClass(int charisma) {

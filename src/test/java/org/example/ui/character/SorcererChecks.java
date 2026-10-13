@@ -1,6 +1,8 @@
 package org.example.ui.character;
 
+import org.example.domain.character.CharacterState;
 import org.example.domain.character.SorcererRules;
+import org.example.ui.GrimoirePanel;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -67,11 +69,9 @@ public final class SorcererChecks {
 
         SwingUtilities.invokeAndWait(
                 () -> {
-                    var workspace =
-                            new org.example.ui.GrimoirePanel(
-                                    org.example.domain.character.CharacterState.defaults());
+                    var workspace = new GrimoirePanel(CharacterState.defaults());
                     try {
-                        workspace.showPage(org.example.ui.GrimoirePanel.CHARACTER);
+                        workspace.showPage(GrimoirePanel.CHARACTER);
                         var controller = workspace.characterController();
                         var level = accessible(workspace, JSpinner.class, "Character level");
                         level.setValue(20);
@@ -111,7 +111,7 @@ public final class SorcererChecks {
                 });
         System.out.println(
                 "Passed: 20 levels, 600 ability combinations, four subclasses, bounds and current"
-                    + " Character controls.");
+                        + " Character controls.");
     }
 
     private static void check(boolean condition, String message) {

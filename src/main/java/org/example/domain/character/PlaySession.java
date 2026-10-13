@@ -19,7 +19,7 @@ public final class PlaySession {
     private final SpellSelection selection;
     private final Runnable selectionListener = this::holdZeroHp;
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
-    private final int[] slots = new int[9];
+    private final int[] slots = new int[RuleLimits.MAX_SPELL_LEVEL];
     private int points, innateUses, textSize = 14;
     private int hitPoints, maxHitPoints;
 
@@ -175,8 +175,8 @@ public final class PlaySession {
 
     public void selectBackground(BackgroundCatalog.Background background) {
         String name = background == null ? "" : background.name();
-        if (sheet.choice("background").equals(background == null ? List.of() : List.of(name)))
-            return;
+        if (sheet.choice(ChoiceIds.BACKGROUND)
+                .equals(background == null ? List.of() : List.of(name))) return;
         setSheet(
                 sheet.withChoice("background", background == null ? List.of() : List.of(name))
                         .withNote(CharacterSheet.Note.BACKGROUND, name)
@@ -223,8 +223,9 @@ public final class PlaySession {
     public void removeFeat(String name) {
         if (backgroundFeat(name) && !feats.containsKey(name)) return;
         boolean removed = feats.remove(name) != null;
-        if (selection.species() == Species.HUMAN && sheet.choice("human.feat").contains(name)) {
-            sheet = sheet.withChoice("human.feat", List.of());
+        if (selection.species() == Species.HUMAN
+                && sheet.choice(ChoiceIds.HUMAN_FEAT).contains(name)) {
+            sheet = sheet.withChoice(ChoiceIds.HUMAN_FEAT, List.of());
             removed = true;
         }
         if (removed) changed();
@@ -416,7 +417,7 @@ public final class PlaySession {
                         selection.available(spell),
                         meta,
                         freeCasts(spell),
-                        slot >= 1 && slot <= 9 ? remainingSlots(slot) : 0,
+                        slot >= 1 && slot <= RuleLimits.MAX_SPELL_LEVEL ? remainingSlots(slot) : 0,
                         remainingPoints());
         String error = CastingRules.validate(spell, slot, speciesFree, requested, context);
         if (!error.isEmpty()) return error;
@@ -467,7 +468,7 @@ public final class PlaySession {
         feats.putAll(state.feats());
         hitPoints = state.hitPoints();
         maxHitPoints = state.maxHitPoints();
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < RuleLimits.MAX_SPELL_LEVEL; i++) {
             slots[i] = state.spentSlots().get(i);
         }
         points = state.spentPoints();

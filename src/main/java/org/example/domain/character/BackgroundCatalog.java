@@ -25,7 +25,7 @@ public final class BackgroundCatalog {
         }
 
         public String id() {
-            return "background." + name;
+            return ChoiceIds.background(name);
         }
 
         public String sourceUrl() {
@@ -71,7 +71,9 @@ public final class BackgroundCatalog {
     }
 
     public static Optional<Background> selected(CharacterSheet sheet) {
-        return sheet.choice("background").stream().findFirst().map(BackgroundCatalog::named);
+        return sheet.choice(ChoiceIds.BACKGROUND).stream()
+                .findFirst()
+                .map(BackgroundCatalog::named);
     }
 
     private static final String DATA =

@@ -1,7 +1,9 @@
 package org.example;
 
 import org.example.persistence.CharacterStore;
+import org.example.persistence.SQLiteSpellRepository;
 import org.example.ui.GrimoirePanel;
+import org.example.ui.common.WindowChrome;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -18,7 +20,7 @@ public class Main {
         SwingUtilities.invokeLater(
                 () -> {
                     try {
-                        org.example.persistence.SQLiteSpellRepository.bundled();
+                        SQLiteSpellRepository.bundled();
                     } catch (IllegalStateException error) {
                         JOptionPane.showMessageDialog(
                                 null,
@@ -48,7 +50,7 @@ public class Main {
         GrimoirePanel panel = new GrimoirePanel(store.load());
         panel.setSaveLocked(store.isSaveLocked());
         JFrame window = new JFrame("Arcane Grimoire · DnD Companion (2024)");
-        org.example.ui.common.WindowChrome.install(window);
+        WindowChrome.install(window);
         window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.setContentPane(panel);
         panel.setSaveActions(

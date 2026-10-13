@@ -8,6 +8,7 @@ import org.example.ui.character.FeatsPanel;
 import org.example.ui.character.MetamagicPanel;
 import org.example.ui.common.AppStyle;
 import org.example.ui.common.ArcaneIcon;
+import org.example.ui.common.CharacterSummary;
 import org.example.ui.common.LiveView;
 import org.example.ui.spells.CastingPanel;
 import org.example.ui.spells.SpellLibraryPanel;
@@ -59,12 +60,12 @@ public final class GrimoirePanel extends JPanel implements LiveView {
     private final Map<String, JButton> navigation = new LinkedHashMap<>();
     private final JLabel pendingDecisions = AppStyle.label("!", 17, true);
 
-    private final org.example.ui.common.CharacterSummary summary;
+    private final CharacterSummary summary;
     private final JCheckBox lock = new JCheckBox("Lock saved character");
     private final JCheckBox dark = new JCheckBox("Dark theme");
     private final JComboBox<Integer> size = new JComboBox<>(new Integer[] {12, 14, 16, 18});
     private final JButton restore;
-    private final Runnable listener = this::refresh;
+    private final java.beans.PropertyChangeListener stateListener = event -> refresh();
     private boolean updating, disposed;
     private String currentPage = COMBAT;
 
@@ -83,7 +84,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
                         BorderFactory.createMatteBorder(0, 0, 2, 2, AppStyle.LINE),
                         new EmptyBorder(18, 16, 18, 16)));
         JPanel sideTop = AppStyle.section(new BorderLayout(0, 16));
-        summary = new org.example.ui.common.CharacterSummary(this::snapshot, playSession());
+        summary = new CharacterSummary(this::snapshot, playSession());
         sideTop.add(summary, BorderLayout.NORTH);
         JPanel nav = AppStyle.section(new GridLayout(0, 1, 0, 7));
         addNavigation(
@@ -195,10 +196,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         pages.add(sheetEditor, CHARACTER);
         workspace.add(pages, BorderLayout.CENTER);
         add(workspace, BorderLayout.CENTER);
-        character.addPropertyChangeListener("saveStatus", e -> refresh());
-        character.addPropertyChangeListener("characterState", e -> refresh());
-        playSession().addListener(listener);
-        playSession().selection().addChangeListener(listener);
+        character.addPropertyChangeListener("characterState", stateListener);
         showPage(COMBAT);
         refresh();
     }
@@ -355,8 +353,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
             return;
         }
         disposed = true;
-        playSession().removeListener(listener);
-        playSession().selection().removeChangeListener(listener);
+        character.removePropertyChangeListener("characterState", stateListener);
         combat.dispose();
         library.dispose();
         metamagic.dispose();

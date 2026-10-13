@@ -2,6 +2,7 @@ package org.example.application;
 
 import org.example.domain.character.CharacterState;
 import org.example.domain.character.PlaySession;
+import org.example.domain.character.RuleLimits;
 import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.domain.spells.SpellSelection;
@@ -70,7 +71,8 @@ public final class CharacterController implements AutoCloseable {
     }
 
     public void setCharismaScore(int value) {
-        if (value < 1 || value > 30) throw new IllegalArgumentException("Charisma must be 1–30");
+        if (value < RuleLimits.MIN_ABILITY_SCORE || value > RuleLimits.MAX_ABILITY_SCORE)
+            throw new IllegalArgumentException("Charisma must be 1–30");
         if (charisma == value) return;
         charisma = value;
         session.characterChanged();

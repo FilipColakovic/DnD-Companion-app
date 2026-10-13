@@ -1,5 +1,7 @@
 package org.example.domain.spells;
 
+import org.example.persistence.SQLiteSpellRepository;
+
 public record SpellDetails(
         String school,
         String castingTime,
@@ -12,9 +14,7 @@ public record SpellDetails(
         String higherLevels,
         String source) {
     public static SpellDetails forSpell(SpellCatalog.Spell spell) {
-        return org.example.persistence.SQLiteSpellRepository.bundled()
-                .require(spell.name())
-                .details();
+        return SQLiteSpellRepository.bundled().require(spell.name()).details();
     }
 
     public String shortDescription() {

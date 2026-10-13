@@ -121,28 +121,28 @@ public final class CharacterChoices {
                                         + " Servant|Witch Bolt"));
     public static final Choice SORCERER_SKILLS =
             new Choice(
-                    "sorcerer.skills",
+                    ChoiceIds.SORCERER_SKILLS,
                     "Sorcerer · Skill proficiencies",
                     "Choose two class skills. These choices grant proficiency, not expertise.",
                     2,
                     names("Arcana|Deception|Insight|Intimidation|Persuasion|Religion"));
     public static final Choice ELF_SKILL =
             new Choice(
-                    "elf.skill",
+                    ChoiceIds.ELF_SKILL,
                     "Elf · Keen Senses",
                     "Choose one skill proficiency.",
                     1,
                     names("Insight|Perception|Survival"));
     public static final Choice HUMAN_SKILL =
             new Choice(
-                    "human.skill",
+                    ChoiceIds.HUMAN_SKILL,
                     "Human · Skillful",
                     "Choose one additional skill proficiency.",
                     1,
                     SKILLS);
     public static final Choice HUMAN_FEAT =
             new Choice(
-                    "human.feat",
+                    ChoiceIds.HUMAN_FEAT,
                     "Human · Versatile",
                     "Choose one PHB 2024 Origin feat, in addition to your background feat.",
                     1,
@@ -152,7 +152,7 @@ public final class CharacterChoices {
                             .toList());
     public static final Choice DRAGON =
             new Choice(
-                    "dragonborn.ancestry",
+                    ChoiceIds.DRAGONBORN_ANCESTRY,
                     "Dragonborn · Draconic Ancestry",
                     "Choose an ancestor. This determines your breath weapon damage and damage"
                             + " resistance.",
@@ -163,7 +163,7 @@ public final class CharacterChoices {
                                 + " — Cold"));
     public static final Choice GIANT =
             new Choice(
-                    "goliath.ancestry",
+                    ChoiceIds.GOLIATH_ANCESTRY,
                     "Goliath · Giant Ancestry",
                     "Choose one ancestral benefit.",
                     1,
@@ -173,56 +173,56 @@ public final class CharacterChoices {
                                     + " Thunder"));
     public static final Choice SKILLED =
             new Choice(
-                    "feat.Skilled",
+                    ChoiceIds.FEAT_SKILLED,
                     "Skilled · Proficiencies",
                     "Choose any combination of three skills or tools.",
                     3,
                     skilledOptions());
     public static final Choice CRAFTER =
             new Choice(
-                    "feat.Crafter",
+                    ChoiceIds.FEAT_CRAFTER,
                     "Crafter · Tool proficiencies",
                     "Choose three different Artisan's Tools.",
                     3,
                     ARTISAN);
     public static final Choice MUSICIAN =
             new Choice(
-                    "feat.Musician",
+                    ChoiceIds.FEAT_MUSICIAN,
                     "Musician · Instrument proficiencies",
                     "Choose three different musical instruments.",
                     3,
                     INSTRUMENTS);
     public static final Choice SKILL_EXPERT =
             new Choice(
-                    "feat.Skill Expert.skill",
+                    ChoiceIds.FEAT_SKILL_EXPERT_SKILL,
                     "Skill Expert · Proficiency",
                     "Choose one skill proficiency.",
                     1,
                     SKILLS);
     public static final Choice KEEN_MIND =
             new Choice(
-                    "feat.Keen Mind",
+                    ChoiceIds.FEAT_KEEN_MIND,
                     "Keen Mind · Lore Knowledge",
                     "Choose one skill. Gain proficiency, or expertise if already proficient.",
                     1,
                     names("Arcana|History|Investigation|Nature|Religion"));
     public static final Choice OBSERVANT =
             new Choice(
-                    "feat.Observant",
+                    ChoiceIds.FEAT_OBSERVANT,
                     "Observant · Keen Observer",
                     "Choose one skill. Gain proficiency, or expertise if already proficient.",
                     1,
                     names("Insight|Investigation|Perception"));
     private static final Choice INITIATE_LIST =
             new Choice(
-                    "feat.Magic Initiate.list",
+                    ChoiceIds.FEAT_MAGIC_INITIATE_LIST,
                     "Magic Initiate · Spell list",
                     "Choose one list for all three spells.",
                     1,
                     List.of("Cleric", "Druid", "Wizard"));
     private static final Choice INITIATE_ABILITY =
             new Choice(
-                    "feat.Magic Initiate.ability",
+                    ChoiceIds.FEAT_MAGIC_INITIATE_ABILITY,
                     "Magic Initiate · Spellcasting ability",
                     "Choose the ability used for these spells.",
                     1,
@@ -264,7 +264,7 @@ public final class CharacterChoices {
 
     private static Choice size(Species species) {
         return new Choice(
-                "species." + species.name() + ".size",
+                ChoiceIds.species(species, "size"),
                 species + " · Size",
                 "Choose your character's size.",
                 1,
@@ -273,7 +273,7 @@ public final class CharacterChoices {
 
     public static Choice casting(Species species) {
         return new Choice(
-                "species." + species.name() + ".casting",
+                ChoiceIds.species(species, "casting"),
                 species + " · Spellcasting ability",
                 "Choose the ability for spells granted by this lineage or legacy.",
                 1,
@@ -321,8 +321,8 @@ public final class CharacterChoices {
                             allowed));
         }
         Set<String> chosen = new HashSet<>(feats);
-        if (species == Species.HUMAN) chosen.addAll(sheet.choice("human.feat"));
-        for (String feat : chosen) addFeatChoices(list, sheet, feat, "feat." + feat, "", "");
+        if (species == Species.HUMAN) chosen.addAll(sheet.choice(ChoiceIds.HUMAN_FEAT));
+        for (String feat : chosen) addFeatChoices(list, sheet, feat, ChoiceIds.feat(feat), "", "");
         if (chosen.contains("Skill Expert")) {
             list.add(SKILL_EXPERT);
             Set<Skill> granted = skills(sheet, species, feats);
@@ -336,13 +336,15 @@ public final class CharacterChoices {
                             .filter(
                                     skill ->
                                             sheet.tier(skill) < 2
-                                                    || sheet.choice("feat.Skill Expert.expertise")
+                                                    || sheet.choice(
+                                                                    ChoiceIds
+                                                                            .FEAT_SKILL_EXPERT_EXPERTISE)
                                                             .contains(skill.label))
                             .map(skill -> skill.label)
                             .toList();
             list.add(
                     new Choice(
-                            "feat.Skill Expert.expertise",
+                            ChoiceIds.FEAT_SKILL_EXPERT_EXPERTISE,
                             "Skill Expert · Expertise",
                             "Choose a proficient skill without expertise. Choose your new"
                                     + " proficiency first if necessary.",
@@ -484,7 +486,7 @@ public final class CharacterChoices {
                 list,
                 sheet,
                 background.feat(),
-                prefix + ".feat." + background.feat(),
+                ChoiceIds.scopedFeat(prefix, background.feat()),
                 background.spellList(),
                 background.name() + " · ");
         return List.copyOf(list);
@@ -509,29 +511,39 @@ public final class CharacterChoices {
                                 SKILL_EXPERT,
                                 KEEN_MIND,
                                 OBSERVANT));
-        known.add(new Choice("feat.Skill Expert.expertise", "", "", 1, SKILLS));
+        known.add(new Choice(ChoiceIds.FEAT_SKILL_EXPERT_EXPERTISE, "", "", 1, SKILLS));
         known.add(
-                new Choice("feat.Keen Mind.tier", "", "", 1, List.of("Proficiency", "Expertise")));
+                new Choice(
+                        ChoiceIds.FEAT_KEEN_MIND_TIER,
+                        "",
+                        "",
+                        1,
+                        List.of("Proficiency", "Expertise")));
         known.add(
-                new Choice("feat.Observant.tier", "", "", 1, List.of("Proficiency", "Expertise")));
+                new Choice(
+                        ChoiceIds.FEAT_OBSERVANT_TIER,
+                        "",
+                        "",
+                        1,
+                        List.of("Proficiency", "Expertise")));
         for (Species species : Species.values()) known.addAll(speciesChoices(species));
         known.add(
                 new Choice(
-                        "feat.Magic Initiate.cantrips",
+                        ChoiceIds.FEAT_MAGIC_INITIATE_CANTRIPS,
                         "",
                         "",
                         2,
                         CANTRIPS.values().stream().flatMap(List::stream).distinct().toList()));
         known.add(
                 new Choice(
-                        "feat.Magic Initiate.spell",
+                        ChoiceIds.FEAT_MAGIC_INITIATE_SPELL,
                         "",
                         "",
                         1,
                         SPELLS.values().stream().flatMap(List::stream).distinct().toList()));
         for (var background : BackgroundCatalog.all())
             known.addAll(backgroundChoices(background, CharacterSheet.defaults()));
-        known.add(new Choice("background.Wayfarer.gaming", "", "", 1, GAMING));
+        known.add(new Choice(ChoiceIds.BACKGROUND_WAYFARER_GAMING, "", "", 1, GAMING));
         Choice choice =
                 known.stream()
                         .filter(item -> item.id().equals(id))
@@ -548,7 +560,7 @@ public final class CharacterChoices {
             CharacterSheet sheet, Species species, Map<String, String> manual) {
         Map<String, String> result = new HashMap<>(manual);
         if (species == Species.HUMAN && HUMAN_FEAT.complete(sheet))
-            result.putIfAbsent(sheet.choice("human.feat").getFirst(), "Human · Versatile");
+            result.putIfAbsent(sheet.choice(ChoiceIds.HUMAN_FEAT).getFirst(), "Human · Versatile");
         BackgroundCatalog.selected(sheet)
                 .ifPresent(
                         background -> {
@@ -563,7 +575,7 @@ public final class CharacterChoices {
     public static Set<Skill> skills(CharacterSheet sheet, Species species, Set<String> feats) {
         Set<Skill> result = EnumSet.noneOf(Skill.class);
         Set<String> active = new HashSet<>(feats);
-        if (species == Species.HUMAN) active.addAll(sheet.choice("human.feat"));
+        if (species == Species.HUMAN) active.addAll(sheet.choice(ChoiceIds.HUMAN_FEAT));
         for (Choice choice : List.of(SORCERER_SKILLS, HUMAN_SKILL, ELF_SKILL, SKILLED)) {
             if (choice == HUMAN_SKILL && species != Species.HUMAN
                     || choice == ELF_SKILL && !elf(species)
@@ -598,7 +610,7 @@ public final class CharacterChoices {
         Set<Skill> result = EnumSet.noneOf(Skill.class), granted = skills(sheet, species, feats);
         if (feats.contains("Skill Expert"))
             for (Skill skill : Skill.values())
-                if (sheet.choice("feat.Skill Expert.expertise").contains(skill.label)
+                if (sheet.choice(ChoiceIds.FEAT_SKILL_EXPERT_EXPERTISE).contains(skill.label)
                         && (granted.contains(skill) || sheet.tier(skill) > 0)) result.add(skill);
         for (Choice choice : List.of(KEEN_MIND, OBSERVANT))
             if (feats.contains(choice == KEEN_MIND ? "Keen Mind" : "Observant")

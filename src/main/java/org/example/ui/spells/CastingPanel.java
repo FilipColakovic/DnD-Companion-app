@@ -1,5 +1,6 @@
 package org.example.ui.spells;
 
+import org.example.domain.character.CharacterState;
 import org.example.domain.character.Metamagic;
 import org.example.domain.character.PlaySession;
 import org.example.domain.character.SorcererRules;
@@ -9,6 +10,7 @@ import org.example.domain.spells.SpellDetails;
 import org.example.domain.spells.SpellMechanics;
 import org.example.ui.common.AppStyle;
 import org.example.ui.common.LiveView;
+import org.example.ui.common.TextUpdates;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -85,7 +87,7 @@ public final class CastingPanel extends JPanel implements LiveView {
                                 new SpellLibraryPanel(
                                         session,
                                         () ->
-                                                new org.example.domain.character.CharacterState(
+                                                new CharacterState(
                                                         session.selection().level(),
                                                         charisma.getAsInt(),
                                                         session.selection().subclass(),
@@ -406,7 +408,7 @@ public final class CastingPanel extends JPanel implements LiveView {
                                 ? "No additional scaling listed."
                                 : d.higherLevels());
         boolean same = Objects.equals(preview.getClientProperty("spellName"), spell.name());
-        org.example.ui.common.TextUpdates.set(preview, mechanics, same);
+        TextUpdates.set(preview, mechanics, same);
         preview.putClientProperty("spellName", spell.name());
         var formula = damageProfile();
         damageButton.setEnabled(formula.isPresent());

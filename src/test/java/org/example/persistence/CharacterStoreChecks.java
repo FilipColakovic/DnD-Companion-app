@@ -1,7 +1,10 @@
 package org.example.persistence;
 
 import org.example.application.CharacterController;
+import org.example.domain.character.BackgroundCatalog;
+import org.example.domain.character.CharacterSheet;
 import org.example.domain.character.CharacterState;
+import org.example.domain.character.FeatCatalog;
 import org.example.domain.character.Metamagic;
 import org.example.domain.character.PlaySession;
 import org.example.domain.character.SorcererRules;
@@ -56,26 +59,22 @@ public final class CharacterStoreChecks {
             session.setHitPoints(7, 22);
             session.setSheet(
                     session.sheet()
-                            .withAbility(
-                                    org.example.domain.character.CharacterSheet.Ability.DEX, 14)
-                            .withSkill(org.example.domain.character.CharacterSheet.Skill.ARCANA, 2)
-                            .withNote(
-                                    org.example.domain.character.CharacterSheet.Note.BACKGROUND,
-                                    "Sage")
+                            .withAbility(CharacterSheet.Ability.DEX, 14)
+                            .withSkill(CharacterSheet.Skill.ARCANA, 2)
+                            .withNote(CharacterSheet.Note.BACKGROUND, "Sage")
                             .withChoice(
                                     "sorcerer.skills", java.util.List.of("Deception", "Persuasion"))
                             .withChoice("human.skill", java.util.List.of("Perception"))
                             .withChoice("human.feat", java.util.List.of("Skilled")));
             check(
                     session.equipFeat(
-                                    org.example.domain.character.FeatCatalog.named("War Caster"),
+                                    FeatCatalog.named("War Caster"),
                                     "CHA +1\nChosen at level 4",
                                     30,
                                     true)
                             .isEmpty(),
                     "Equip a PHB feat for persistence");
-            session.selectBackground(
-                    org.example.domain.character.BackgroundCatalog.named("Artisan"));
+            session.selectBackground(BackgroundCatalog.named("Artisan"));
             session.setSheet(
                     session.sheet()
                             .withChoice(

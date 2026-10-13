@@ -5,6 +5,7 @@ import org.example.domain.character.CharacterState;
 import org.example.domain.character.Metamagic;
 import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
+import org.example.domain.spells.SpellCatalog;
 import org.example.persistence.CharacterStore;
 import org.example.ui.GrimoirePanel;
 import org.example.ui.spells.CastingPanel;
@@ -47,7 +48,7 @@ public final class WindowPersistenceChecks {
                             panel.playSession()
                                     .selection()
                                     .choose(
-                                            org.example.domain.spells.SpellCatalog.all().stream()
+                                            SpellCatalog.all().stream()
                                                     .filter(spell -> spell.name().equals("Shield"))
                                                     .findFirst()
                                                     .orElseThrow(),
@@ -136,7 +137,7 @@ public final class WindowPersistenceChecks {
                                     .playSession()
                                     .selection()
                                     .choose(
-                                            org.example.domain.spells.SpellCatalog.all().stream()
+                                            SpellCatalog.all().stream()
                                                     .filter(
                                                             spell ->
                                                                     spell.name().equals("Fireball"))

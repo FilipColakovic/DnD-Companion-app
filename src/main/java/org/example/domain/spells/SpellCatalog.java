@@ -2,6 +2,7 @@ package org.example.domain.spells;
 
 import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
+import org.example.persistence.SQLiteSpellRepository;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -20,9 +21,7 @@ public final class SpellCatalog {
         }
 
         public URI reference() {
-            return org.example.persistence.SQLiteSpellRepository.bundled()
-                    .require(name)
-                    .reference();
+            return SQLiteSpellRepository.bundled().require(name).reference();
         }
     }
 
@@ -33,7 +32,7 @@ public final class SpellCatalog {
 
     static {
         Map<String, Spell> spells = new LinkedHashMap<>();
-        for (var entry : org.example.persistence.SQLiteSpellRepository.bundled().all().values()) {
+        for (var entry : SQLiteSpellRepository.bundled().all().values()) {
             spells.put(entry.name(), new Spell(entry.name(), entry.level(), entry.sorcererSpell()));
         }
         grant(spells, SorcererRules.Subclass.ABERRANT, 3, 0, "Mind Sliver");

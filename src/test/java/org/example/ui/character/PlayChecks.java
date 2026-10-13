@@ -8,6 +8,7 @@ import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellSelection;
+import org.example.ui.GrimoirePanel;
 import org.example.ui.common.AppStyle;
 import org.example.ui.spells.CastingPanel;
 
@@ -207,8 +208,8 @@ public final class PlayChecks {
                 "New saves omit removed turn state");
         SwingUtilities.invokeAndWait(
                 () -> {
-                    org.example.ui.GrimoirePanel workspace =
-                            new org.example.ui.GrimoirePanel(
+                    GrimoirePanel workspace =
+                            new GrimoirePanel(
                                     new CharacterState(
                                             5,
                                             17,

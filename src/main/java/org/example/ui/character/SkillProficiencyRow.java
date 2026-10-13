@@ -2,6 +2,8 @@ package org.example.ui.character;
 
 import org.example.domain.character.CharacterSheet;
 import org.example.domain.character.CharacterSheet.Skill;
+import org.example.domain.character.Proficiency;
+import org.example.domain.character.SkillRules;
 import org.example.ui.common.AppStyle;
 
 import java.awt.BorderLayout;
@@ -37,7 +39,14 @@ final class SkillProficiencyRow extends JPanel {
         putClientProperty("surfaceRole", "low");
         marker =
                 AppStyle.textButton(
-                        "", () -> change.accept(granted ? (tier == 1 ? 2 : 0) : (tier + 1) % 3));
+                        "",
+                        () ->
+                                change.accept(
+                                        granted
+                                                ? (tier == 1 ? 2 : 0)
+                                                : Proficiency.fromStoredValue(tier)
+                                                        .next()
+                                                        .storedValue()));
         marker.setPreferredSize(new Dimension(17, 22));
         marker.setFocusPainted(true);
         marker.getAccessibleContext().setAccessibleName("Proficiency for " + skill.label);
@@ -74,7 +83,7 @@ final class SkillProficiencyRow extends JPanel {
                         BorderFactory.createLineBorder(AppStyle.LINE, tier > 0 ? 2 : 1),
                         new EmptyBorder(4, 6, 4, 6)));
         marker.setIcon(new TierIcon(tier));
-        String state = tier == 0 ? "Untrained" : tier == 1 ? "Proficient" : "Expertise";
+        String state = Proficiency.fromStoredValue(tier).label();
         String instruction =
                 expertiseSkills.contains(skill)
                         ? "Expertise granted by a feat. Edit that choice on Character to change it."
@@ -91,9 +100,7 @@ final class SkillProficiencyRow extends JPanel {
                                         : "");
         marker.getAccessibleContext().setAccessibleDescription(instruction);
         marker.setToolTipText(instruction);
-        int value =
-                org.example.domain.character.SkillRules.bonus(
-                        sheet.score(skill.ability, charisma), proficiency, tier);
+        int value = SkillRules.bonus(sheet.score(skill.ability, charisma), proficiency, tier);
         bonus.setText(String.format("%+d", value));
         star.setVisible(tier == 2);
         String ink = tier == 2 ? "badgeText" : "ink";

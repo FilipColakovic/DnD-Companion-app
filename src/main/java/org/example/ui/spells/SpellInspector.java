@@ -13,6 +13,7 @@ import org.example.domain.character.SorcererRules;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellDetails;
 import org.example.ui.common.AppStyle;
+import org.example.ui.common.TextUpdates;
 import org.example.ui.spells.SpellLibraryComponents.Wrap;
 
 import java.awt.Dimension;
@@ -171,7 +172,7 @@ final class SpellInspector extends JPanel implements Scrollable {
     }
 
     private static void updateText(JTextArea area, String text, boolean preserve) {
-        org.example.ui.common.TextUpdates.set(area, text, preserve);
+        TextUpdates.set(area, text, preserve);
     }
 
     @Override

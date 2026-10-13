@@ -4,12 +4,12 @@ import org.example.domain.character.BackgroundCatalog;
 import org.example.domain.character.CharacterState;
 import org.example.domain.character.FeatCatalog;
 import org.example.ui.common.AppStyle;
+import org.example.ui.common.CardComponents;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
@@ -21,7 +21,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -39,19 +38,11 @@ final class FeatCard extends JPanel {
         getAccessibleContext().setAccessibleName("Feat card " + feat.name());
         add(card, BorderLayout.CENTER);
         JPanel heading = AppStyle.section(new BorderLayout(8, 0));
-        JPanel tile = AppStyle.card(new BorderLayout());
-        tile.putClientProperty(
-                "surfaceRole",
-                feat.category() == FeatCatalog.Category.ORIGIN ? "slotAvailable" : "low");
-        tile.putClientProperty("shadowOffset", 2);
-        tile.setBorder(new EmptyBorder(3, 3, 5, 5));
-        tile.setPreferredSize(new Dimension(44, 44));
-        JLabel level = AppStyle.mono("" + feat.minimumLevel(), 20);
-        level.setHorizontalAlignment(SwingConstants.CENTER);
-        AppStyle.setColorRole(
-                level, feat.category() == FeatCatalog.Category.ORIGIN ? "badgeText" : "ink");
-        level.setToolTipText("Minimum level " + feat.minimumLevel());
-        tile.add(level);
+        JPanel tile =
+                CardComponents.levelTile(
+                        "" + feat.minimumLevel(),
+                        feat.category() == FeatCatalog.Category.ORIGIN,
+                        "Minimum level " + feat.minimumLevel());
         JPanel tileHolder = AppStyle.section(new FlowLayout(FlowLayout.LEFT, 0, 0));
         tileHolder.add(tile);
         heading.add(tileHolder, BorderLayout.WEST);

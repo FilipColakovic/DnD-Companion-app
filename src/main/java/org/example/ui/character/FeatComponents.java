@@ -1,11 +1,11 @@
 package org.example.ui.character;
 
 import org.example.ui.common.AppStyle;
+import org.example.ui.common.CardComponents;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -22,7 +22,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.Scrollable;
-import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 /** Shared compact geometry for the feat library, cards and inspector. */
@@ -30,21 +29,17 @@ final class FeatComponents {
     private FeatComponents() {}
 
     static JPanel card(LayoutManager layout) {
-        JPanel card = AppStyle.card(layout);
-        card.setBorder(new EmptyBorder(12, 12, 16, 16));
-        return card;
+        return CardComponents.card(layout, new Insets(12, 12, 16, 16), null);
     }
 
     static JLabel tag(String text, boolean yellow) {
-        JLabel label = AppStyle.mono(text, 11);
-        label.setOpaque(true);
-        label.putClientProperty("surfaceRole", yellow ? "slotAvailable" : "high");
-        AppStyle.setColorRole(label, yellow ? "badgeText" : "ink");
-        label.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(AppStyle.LINE),
-                        new EmptyBorder(4, 6, 4, 6)));
-        return label;
+        return CardComponents.badge(
+                text,
+                11,
+                false,
+                yellow ? "slotAvailable" : "high",
+                yellow ? "badgeText" : "ink",
+                new Insets(4, 6, 4, 6));
     }
 
     static JLabel colorTag(String text, String surface, String ink) {
@@ -55,49 +50,7 @@ final class FeatComponents {
     }
 
     static JButton title(String name, Runnable action) {
-        JButton button =
-                new JButton(
-                        "<html><u>"
-                                + name.replace("&", "&amp;")
-                                        .replace("<", "&lt;")
-                                        .replace(">", "&gt;")
-                                + "</u></html>") {
-                    @Override
-                    public Dimension getPreferredSize() {
-                        int width = getWidth() > 0 ? getWidth() : 180;
-                        Object renderer =
-                                getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
-                        if (renderer instanceof javax.swing.text.View view) {
-                            view.setSize(width, Float.MAX_VALUE);
-                            return new Dimension(
-                                    width,
-                                    (int)
-                                            Math.ceil(
-                                                    view.getPreferredSpan(
-                                                            javax.swing.text.View.Y_AXIS)));
-                        }
-                        return super.getPreferredSize();
-                    }
-
-                    @Override
-                    public Dimension getMinimumSize() {
-                        return new Dimension(0, getPreferredSize().height);
-                    }
-                };
-        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-        button.putClientProperty("tactileCustomPaint", true);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        AppStyle.setColorRole(button, "ink");
-        button.setBorder(new EmptyBorder(0, 0, 0, 0));
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setVerticalAlignment(SwingConstants.TOP);
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setToolTipText(name);
-        button.addActionListener(e -> action.run());
-        return button;
+        return CardComponents.title(name, action);
     }
 
     /** Two cards per row where there is room, with heights measured for each pair. */

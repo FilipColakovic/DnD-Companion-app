@@ -1,11 +1,11 @@
 package org.example.ui.spells;
 
 import org.example.ui.common.AppStyle;
+import org.example.ui.common.CardComponents;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -21,7 +21,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -29,53 +28,13 @@ final class SpellLibraryComponents {
     private SpellLibraryComponents() {}
 
     static JLabel cardTag(String value, boolean yellow) {
-        JLabel label = tag(value, yellow);
-        label.setFont(new Font("Consolas", Font.BOLD, 11));
-        label.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(AppStyle.LINE),
-                        new EmptyBorder(4, 6, 4, 6)));
-        return label;
-    }
-
-    static final class SpellTitle extends JButton {
-        SpellTitle(String name, Runnable action) {
-            super(
-                    "<html><u>"
-                            + name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                            + "</u></html>");
-            setUI(new javax.swing.plaf.basic.BasicButtonUI());
-            putClientProperty("tactileCustomPaint", true);
-            setFont(new Font("Segoe UI", Font.BOLD, 16));
-            AppStyle.setColorRole(this, "ink");
-            setBorder(new EmptyBorder(0, 0, 0, 0));
-            setBorderPainted(false);
-            setContentAreaFilled(false);
-            setFocusPainted(false);
-            setHorizontalAlignment(SwingConstants.LEFT);
-            setVerticalAlignment(SwingConstants.TOP);
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setToolTipText(name);
-            addActionListener(e -> action.run());
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            int width = getWidth() > 0 ? getWidth() : 180;
-            Object renderer = getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
-            if (renderer instanceof javax.swing.text.View view) {
-                view.setSize(width, Float.MAX_VALUE);
-                return new Dimension(
-                        width,
-                        (int) Math.ceil(view.getPreferredSpan(javax.swing.text.View.Y_AXIS)));
-            }
-            return super.getPreferredSize();
-        }
-
-        @Override
-        public Dimension getMinimumSize() {
-            return new Dimension(0, getPreferredSize().height);
-        }
+        return CardComponents.badge(
+                value.toUpperCase(Locale.ROOT),
+                11,
+                true,
+                yellow ? "slotAvailable" : "high",
+                yellow ? "badgeText" : "ink",
+                new Insets(4, 6, 4, 6));
     }
 
     static JLabel coloredTag(String value, String surface) {
@@ -86,15 +45,13 @@ final class SpellLibraryComponents {
     }
 
     static JLabel tag(String value, boolean yellow) {
-        JLabel label = AppStyle.mono(value.toUpperCase(Locale.ROOT), 10);
-        label.setOpaque(true);
-        label.putClientProperty("surfaceRole", yellow ? "slotAvailable" : "high");
-        AppStyle.setColorRole(label, yellow ? "badgeText" : "ink");
-        label.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(AppStyle.LINE),
-                        new EmptyBorder(2, 4, 2, 4)));
-        return label;
+        return CardComponents.badge(
+                value.toUpperCase(Locale.ROOT),
+                10,
+                false,
+                yellow ? "slotAvailable" : "high",
+                yellow ? "badgeText" : "ink",
+                new Insets(2, 4, 2, 4));
     }
 
     static JPanel block(String title, JComponent content) {

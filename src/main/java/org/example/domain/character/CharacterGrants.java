@@ -18,7 +18,7 @@ public record CharacterGrants(
     public static CharacterGrants calculate(
             CharacterSheet sheet, Species species, Set<String> manualFeats) {
         Set<String> toolSources = new HashSet<>(manualFeats);
-        if (species == Species.HUMAN) toolSources.addAll(sheet.choice("human.feat"));
+        if (species == Species.HUMAN) toolSources.addAll(sheet.choice(ChoiceIds.HUMAN_FEAT));
         return new CharacterGrants(
                 CharacterChoices.skills(sheet, species, manualFeats),
                 CharacterChoices.expertise(sheet, species, manualFeats),

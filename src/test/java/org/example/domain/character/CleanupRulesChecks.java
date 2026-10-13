@@ -65,7 +65,7 @@ public final class CleanupRulesChecks {
                 }
         System.out.println(
                 "Passed: atomic cast failures, single notifications, controller checkpoints and"
-                    + " shared skill calculations.");
+                        + " shared skill calculations.");
     }
 
     private static void check(boolean condition, String message) {

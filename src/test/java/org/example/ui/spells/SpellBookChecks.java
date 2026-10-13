@@ -156,7 +156,7 @@ public final class SpellBookChecks {
                 });
         System.out.println(
                 "Passed: full spell catalog, selection limits and live card-based spell learning"
-                    + " and filtering.");
+                        + " and filtering.");
     }
 
     private static void check(boolean condition, String message) {

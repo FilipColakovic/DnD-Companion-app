@@ -3,6 +3,7 @@ package org.example.ui.character;
 import org.example.domain.character.CharacterChoices;
 import org.example.domain.character.CharacterChoices.Choice;
 import org.example.domain.character.CharacterSheet;
+import org.example.domain.character.ChoiceIds;
 import org.example.domain.character.FeatCatalog;
 import org.example.domain.character.PlaySession;
 import org.example.domain.character.Species;
@@ -258,7 +259,8 @@ final class CharacterChoicesPanel extends JPanel {
             error.setText("");
             error.setVisible(false);
             CharacterSheet updated = session.sheet().withChoice(choice.id(), values);
-            if (choice.id().equals("feat.Keen Mind") || choice.id().equals("feat.Observant")) {
+            if (choice.id().equals(ChoiceIds.FEAT_KEEN_MIND)
+                    || choice.id().equals(ChoiceIds.FEAT_OBSERVANT)) {
                 var skill =
                         Arrays.stream(CharacterSheet.Skill.values())
                                 .filter(item -> item.label.equals(values.getFirst()))
@@ -273,10 +275,10 @@ final class CharacterChoicesPanel extends JPanel {
                                                 ? "Expertise"
                                                 : "Proficiency"));
             }
-            if (choice.id().equals("feat.Magic Initiate.list"))
+            if (choice.id().equals(ChoiceIds.FEAT_MAGIC_INITIATE_LIST))
                 updated =
-                        updated.withChoice("feat.Magic Initiate.cantrips", List.of())
-                                .withChoice("feat.Magic Initiate.spell", List.of());
+                        updated.withChoice(ChoiceIds.FEAT_MAGIC_INITIATE_CANTRIPS, List.of())
+                                .withChoice(ChoiceIds.FEAT_MAGIC_INITIATE_SPELL, List.of());
             session.setSheet(updated);
             refresh();
         }

@@ -11,6 +11,7 @@ import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellSelection;
+import org.example.ui.GrimoirePanel;
 import org.example.ui.common.AppStyle;
 
 import java.awt.Component;
@@ -300,8 +301,8 @@ public final class CharacterChoicesChecks {
                 });
         SwingUtilities.invokeAndWait(
                 () -> {
-                    org.example.ui.GrimoirePanel workspace =
-                            new org.example.ui.GrimoirePanel(
+                    GrimoirePanel workspace =
+                            new GrimoirePanel(
                                     new CharacterState(
                                             3,
                                             17,
@@ -309,7 +310,7 @@ public final class CharacterChoicesChecks {
                                             Set.of(),
                                             Species.HUMAN));
                     try {
-                        workspace.showPage(org.example.ui.GrimoirePanel.CHARACTER);
+                        workspace.showPage(GrimoirePanel.CHARACTER);
                         PlaySession session = workspace.playSession();
                         session.setSheet(
                                 session.sheet()

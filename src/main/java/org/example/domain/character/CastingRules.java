@@ -26,7 +26,7 @@ public final class CastingRules {
 
     public static int metamagicCost(int level, boolean innate, Set<Metamagic> options) {
         int cost = options.stream().mapToInt(Metamagic::cost).sum();
-        if (level == 20 && innate)
+        if (level == RuleLimits.MAX_LEVEL && innate)
             cost -= options.stream().mapToInt(Metamagic::cost).max().orElse(0);
         return cost;
     }
@@ -56,11 +56,12 @@ public final class CastingRules {
             if (speciesFree) {
                 if (context.freeCasts() == 0 || slot != spell.level())
                     return "No species free casts remain, or slot level differs from the spell's"
-                               + " base level.";
-            } else if (slot < spell.level() || slot > 9 || context.remainingSlots() == 0)
-                return "No appropriate spell slot remaining.";
+                            + " base level.";
+            } else if (slot < spell.level()
+                    || slot > RuleLimits.MAX_SPELL_LEVEL
+                    || context.remainingSlots() == 0) return "No appropriate spell slot remaining.";
         }
-        if (options.contains(Metamagic.TWINNED) && slot >= 9)
+        if (options.contains(Metamagic.TWINNED) && slot >= RuleLimits.MAX_SPELL_LEVEL)
             return "Twinned Spell cannot raise the effective level above 9.";
         if (context.remainingPoints() < metamagicCost(context.level(), context.innate(), options))
             return "Not enough Sorcery Points.";
