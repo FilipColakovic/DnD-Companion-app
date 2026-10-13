@@ -1,22 +1,16 @@
 package org.example.ui.spells;
 
+import org.example.domain.character.CharacterState;
 import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellDetails;
 import org.example.domain.spells.SpellSelection;
 import org.example.ui.GrimoirePanel;
-import org.example.domain.character.CharacterState;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
 
-import javax.imageio.ImageIO;
-import javax.swing.JSlider;
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
 public final class SpeciesChecks {
@@ -64,31 +58,60 @@ public final class SpeciesChecks {
                 Species.FOREST_GNOME.castingNote("Speak with Animals", 9).contains("4 /"),
                 "Forest Gnome uses proficiency for free casts");
 
-        SwingUtilities.invokeAndWait(() -> {
-            GrimoirePanel workspace = new GrimoirePanel(CharacterState.defaults());
-            try {
-                workspace.showPreparedSpells();
-                var library=workspace.libraryPanel();
-                workspace.characterController().selectSpecies(Species.WOOD_ELF);
-                check(library.visibleSpellCount()==1,"Species changes update the current prepared library");
-                workspace.characterController().setLevel(5);
-                check(library.visibleSpellCount()==10,"Level 5 combines subclass and Wood Elf grants");
-                workspace.characterController().selectSpecies(Species.INFERNAL_TIEFLING);
-                check(library.visibleSpellCount()==11,"Species change replaces derived grants");
-                workspace.characterController().selectSpecies(Species.HUMAN);
-                check(library.visibleSpellCount()==7 && workspace.snapshot().chosenSpells().isEmpty(),"Grants never become manual choices");
-            } finally {workspace.dispose();}
-        });
-        System.out.println("Passed: PHB species grants at all levels, free casts, complete details and live library updates.");
+        SwingUtilities.invokeAndWait(
+                () -> {
+                    GrimoirePanel workspace = new GrimoirePanel(CharacterState.defaults());
+                    try {
+                        workspace.showPreparedSpells();
+                        var library = workspace.libraryPanel();
+                        workspace.characterController().selectSpecies(Species.WOOD_ELF);
+                        check(
+                                library.visibleSpellCount() == 1,
+                                "Species changes update the current prepared library");
+                        workspace.characterController().setLevel(5);
+                        check(
+                                library.visibleSpellCount() == 10,
+                                "Level 5 combines subclass and Wood Elf grants");
+                        workspace.characterController().selectSpecies(Species.INFERNAL_TIEFLING);
+                        check(
+                                library.visibleSpellCount() == 11,
+                                "Species change replaces derived grants");
+                        workspace.characterController().selectSpecies(Species.HUMAN);
+                        check(
+                                library.visibleSpellCount() == 7
+                                        && workspace.snapshot().chosenSpells().isEmpty(),
+                                "Grants never become manual choices");
+                    } finally {
+                        workspace.dispose();
+                    }
+                });
+        System.out.println(
+                "Passed: PHB species grants at all levels, free casts, complete details and live"
+                    + " library updates.");
     }
 
-    private static void check(boolean condition, String message) { if (!condition) throw new AssertionError(message); }
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
     private static <T extends Component> T accessible(Container root, Class<T> type, String name) {
         for (Component child : root.getComponents()) {
-            if (type.isInstance(child) && child.getAccessibleContext()!=null && name.equals(child.getAccessibleContext().getAccessibleName())) return type.cast(child);
-            if (child instanceof Container nested) { T result=accessible(nested,type,name); if(result!=null)return result; }
+            if (type.isInstance(child)
+                    && child.getAccessibleContext() != null
+                    && name.equals(child.getAccessibleContext().getAccessibleName()))
+                return type.cast(child);
+            if (child instanceof Container nested) {
+                T result = accessible(nested, type, name);
+                if (result != null) return result;
+            }
         }
         return null;
     }
-    private static SpellCatalog.Spell spell(String name) { return SpellCatalog.all().stream().filter(s->s.name().equals(name)).findFirst().orElseThrow(); }
+
+    private static SpellCatalog.Spell spell(String name) {
+        return SpellCatalog.all().stream()
+                .filter(s -> s.name().equals(name))
+                .findFirst()
+                .orElseThrow();
+    }
 }

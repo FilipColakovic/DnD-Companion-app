@@ -168,7 +168,7 @@ public final class MetamagicCardChecks {
                 });
         System.out.println(
                 "Passed: all ten cards, limits, live prepared synergies, spell details, themes and"
-                    + " responsive columns.");
+                        + " responsive columns.");
     }
 
     private static SpellCatalog.Spell spell(String name) {

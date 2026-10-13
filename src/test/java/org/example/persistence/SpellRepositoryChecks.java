@@ -41,7 +41,7 @@ public final class SpellRepositoryChecks {
         if (args.length > 0 && args[0].equals("--bundled-only")) {
             System.out.println(
                     "Passed: bundled spell database loads outside the project directory from a"
-                        + " JAR.");
+                            + " JAR.");
             return;
         }
         List<String> source =
@@ -77,7 +77,7 @@ public final class SpellRepositoryChecks {
         check(
                 source.equals(actual),
                 "Every migrated field, Unicode character, newline and reference matches the"
-                    + " exported data");
+                        + " exported data");
         Path directory = Files.createTempDirectory(Path.of("target"), "spell-repository-");
         Path copy = directory.resolve("spell catalog #1.db");
         try {
@@ -112,7 +112,7 @@ public final class SpellRepositoryChecks {
         }
         System.out.println(
                 "Passed: exact migration of 178 entries, cached immutable lookups, read-only files,"
-                    + " missing/unsupported/empty databases and reference URLs.");
+                        + " missing/unsupported/empty databases and reference URLs.");
     }
 
     private static String escape(String value) {

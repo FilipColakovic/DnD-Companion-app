@@ -235,7 +235,7 @@ final class BackgroundLibraryPanel extends JPanel {
                         "STARTING EQUIPMENT",
                         FeatComponents.text(
                                 "Choose the PHB equipment package or 50 GP on Character. The"
-                                    + " published entry lists the package.",
+                                        + " published entry lists the package.",
                                 12)));
         JButton select =
                 AppStyle.primaryButton(

@@ -2,24 +2,12 @@ package org.example.ui.character;
 
 import org.example.domain.character.SorcererRules;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
-import java.awt.image.BufferedImage;
-import java.io.File;
 
-import javax.imageio.ImageIO;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.SwingUtilities;
 import javax.swing.JSpinner;
+import javax.swing.SwingUtilities;
 
 /** Dependency-free rules and Swing interaction checks. Run with -Djava.awt.headless=true. */
 public final class SorcererChecks {
@@ -77,37 +65,81 @@ public final class SorcererChecks {
             }
         }
 
-        SwingUtilities.invokeAndWait(() -> {
-            var workspace=new org.example.ui.GrimoirePanel(org.example.domain.character.CharacterState.defaults());
-            try {
-                workspace.showPage(org.example.ui.GrimoirePanel.CHARACTER);
-                var controller=workspace.characterController();
-                var level=accessible(workspace,JSpinner.class,"Character level");
-                level.setValue(20);check(controller.snapshot().level()==20,"Current level control updates controller");
-                var charisma=accessible(workspace,JSpinner.class,"CHA score");
-                charisma.setValue(30);check(controller.snapshot().charisma()==30,"Current ability control updates controller");
-                charisma.setValue(1);check(controller.snapshot().charisma()==1,"Lower ability boundary");
-                var selector=find(workspace,SubclassSelector.class);
-                var menu=selector.createMenu();check(menu.getComponentCount()==4,"Four PHB subclass choices");
-                ((JRadioButtonMenuItem)menu.getComponent(3)).doClick(0);
-                check(controller.snapshot().subclass()==SorcererRules.Subclass.WILD_MAGIC,"Menu updates current character");
-                for(int invalid:new int[]{0,21})try{controller.setLevel(invalid);throw new AssertionError("Invalid level accepted");}catch(IllegalArgumentException expected){}
-                for(int invalid:new int[]{0,31})try{controller.setCharismaScore(invalid);throw new AssertionError("Invalid ability accepted");}catch(IllegalArgumentException expected){}
-            } finally {workspace.dispose();}
-        });
-        System.out.println("Passed: 20 levels, 600 ability combinations, four subclasses, bounds and current Character controls.");
+        SwingUtilities.invokeAndWait(
+                () -> {
+                    var workspace =
+                            new org.example.ui.GrimoirePanel(
+                                    org.example.domain.character.CharacterState.defaults());
+                    try {
+                        workspace.showPage(org.example.ui.GrimoirePanel.CHARACTER);
+                        var controller = workspace.characterController();
+                        var level = accessible(workspace, JSpinner.class, "Character level");
+                        level.setValue(20);
+                        check(
+                                controller.snapshot().level() == 20,
+                                "Current level control updates controller");
+                        var charisma = accessible(workspace, JSpinner.class, "CHA score");
+                        charisma.setValue(30);
+                        check(
+                                controller.snapshot().charisma() == 30,
+                                "Current ability control updates controller");
+                        charisma.setValue(1);
+                        check(controller.snapshot().charisma() == 1, "Lower ability boundary");
+                        var selector = find(workspace, SubclassSelector.class);
+                        var menu = selector.createMenu();
+                        check(menu.getComponentCount() == 4, "Four PHB subclass choices");
+                        ((JRadioButtonMenuItem) menu.getComponent(3)).doClick(0);
+                        check(
+                                controller.snapshot().subclass()
+                                        == SorcererRules.Subclass.WILD_MAGIC,
+                                "Menu updates current character");
+                        for (int invalid : new int[] {0, 21})
+                            try {
+                                controller.setLevel(invalid);
+                                throw new AssertionError("Invalid level accepted");
+                            } catch (IllegalArgumentException expected) {
+                            }
+                        for (int invalid : new int[] {0, 31})
+                            try {
+                                controller.setCharismaScore(invalid);
+                                throw new AssertionError("Invalid ability accepted");
+                            } catch (IllegalArgumentException expected) {
+                            }
+                    } finally {
+                        workspace.dispose();
+                    }
+                });
+        System.out.println(
+                "Passed: 20 levels, 600 ability combinations, four subclasses, bounds and current"
+                    + " Character controls.");
     }
-    private static void check(boolean condition,String message){if(!condition)throw new AssertionError(message);}
-    private static <T extends Component> T accessible(Container root,Class<T> type,String name){
-        for(Component child:root.getComponents()){
-            if(type.isInstance(child)&&child.getAccessibleContext()!=null&&name.equals(child.getAccessibleContext().getAccessibleName()))return type.cast(child);
-            if(child instanceof Container nested){T result=accessible(nested,type,name);if(result!=null)return result;}
-        }return null;
+
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
     }
-    private static <T extends Component> T find(Container root,Class<T> type){
-        for(Component child:root.getComponents()){
-            if(type.isInstance(child))return type.cast(child);
-            if(child instanceof Container nested){T result=find(nested,type);if(result!=null)return result;}
-        }return null;
+
+    private static <T extends Component> T accessible(Container root, Class<T> type, String name) {
+        for (Component child : root.getComponents()) {
+            if (type.isInstance(child)
+                    && child.getAccessibleContext() != null
+                    && name.equals(child.getAccessibleContext().getAccessibleName()))
+                return type.cast(child);
+            if (child instanceof Container nested) {
+                T result = accessible(nested, type, name);
+                if (result != null) return result;
+            }
+        }
+        return null;
+    }
+
+    private static <T extends Component> T find(Container root, Class<T> type) {
+        for (Component child : root.getComponents()) {
+            if (type.isInstance(child)) return type.cast(child);
+            if (child instanceof Container nested) {
+                T result = find(nested, type);
+                if (result != null) return result;
+            }
+        }
+        return null;
     }
 }

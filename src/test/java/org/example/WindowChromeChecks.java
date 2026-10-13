@@ -185,7 +185,7 @@ public final class WindowChromeChecks {
         }
         System.out.println(
                 "Passed: custom caption, maximize/restore, dragging, resizing, sidebar-free dialogs"
-                    + " and save-on-close.");
+                        + " and save-on-close.");
     }
 
     private static MouseEvent mouse(

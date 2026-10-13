@@ -230,7 +230,8 @@ public final class PlayChecks {
                     panel.playSession().appearance(true, 18);
                     check(
                             panel.snapshot().play().dark()
-                                    && panel.saveStatusText().equals("Experimenting · save protected"),
+                                    && panel.saveStatusText()
+                                            .equals("Experimenting · save protected"),
                             "Save status includes resource and theme experiments");
                     preview(workspace, "target/play-dark-preview.png", 1000);
                     workspace.restore(saved);
@@ -258,7 +259,7 @@ public final class PlayChecks {
                 });
         System.out.println(
                 "Passed: resource/rest/casting rules, Metamagic eligibility and limits, state"
-                    + " serialization, collapsed list, appearance and checkpoint restoration.");
+                        + " serialization, collapsed list, appearance and checkpoint restoration.");
     }
 
     private static boolean hasText(Container root, String text) {

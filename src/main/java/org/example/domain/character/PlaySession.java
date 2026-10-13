@@ -128,7 +128,9 @@ public final class PlaySession {
         return (int) requiredChoices().stream().filter(choice -> !choice.complete(sheet)).count();
     }
 
-    private CharacterGrants grants() { return CharacterGrants.calculate(sheet, selection.species(), feats.keySet()); }
+    private CharacterGrants grants() {
+        return CharacterGrants.calculate(sheet, selection.species(), feats.keySet());
+    }
 
     public Set<CharacterSheet.Skill> grantedSkills() {
         return grants().skills();
@@ -152,7 +154,8 @@ public final class PlaySession {
         int proficiency =
                 SorcererRules.calculate(selection.level(), charisma, selection.subclass())
                         .proficiencyBonus();
-        return SkillRules.bonus(sheet.score(skill.ability, charisma), proficiency, skillTier(skill));
+        return SkillRules.bonus(
+                sheet.score(skill.ability, charisma), proficiency, skillTier(skill));
     }
 
     public List<String> grantedTools() {
@@ -234,7 +237,10 @@ public final class PlaySession {
         selection.addChangeListener(selectionListener);
     }
 
-    public void dispose() { selection.removeChangeListener(selectionListener); listeners.clear(); }
+    public void dispose() {
+        selection.removeChangeListener(selectionListener);
+        listeners.clear();
+    }
 
     public void addListener(Runnable listener) {
         listeners.add(listener);
@@ -402,9 +408,16 @@ public final class PlaySession {
     public String cast(
             SpellCatalog.Spell spell, int slot, boolean speciesFree, Set<Metamagic> options) {
         Set<Metamagic> requested = Set.copyOf(options);
-        var context = new CastingRules.Context(selection.level(), innate, selection.selected(spell),
-                selection.available(spell), meta, freeCasts(spell),
-                slot >= 1 && slot <= 9 ? remainingSlots(slot) : 0, remainingPoints());
+        var context =
+                new CastingRules.Context(
+                        selection.level(),
+                        innate,
+                        selection.selected(spell),
+                        selection.available(spell),
+                        meta,
+                        freeCasts(spell),
+                        slot >= 1 && slot <= 9 ? remainingSlots(slot) : 0,
+                        remainingPoints());
         String error = CastingRules.validate(spell, slot, speciesFree, requested, context);
         if (!error.isEmpty()) return error;
         int cost = metamagicCost(requested);

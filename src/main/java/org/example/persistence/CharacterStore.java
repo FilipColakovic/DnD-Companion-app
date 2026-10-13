@@ -47,17 +47,17 @@ public final class CharacterStore {
             if (!hasSpecies) {
                 statement.executeUpdate(
                         "ALTER TABLE character_state ADD COLUMN species TEXT NOT NULL DEFAULT"
-                            + " 'HUMAN'");
+                                + " 'HUMAN'");
             }
             if (!hasSaveLock) {
                 statement.executeUpdate(
                         "ALTER TABLE character_state ADD COLUMN save_locked INTEGER NOT NULL"
-                            + " DEFAULT 0");
+                                + " DEFAULT 0");
             }
             if (!hasName) {
                 statement.executeUpdate(
                         "ALTER TABLE character_state ADD COLUMN character_name TEXT NOT NULL"
-                            + " DEFAULT 'Sorcerer'");
+                                + " DEFAULT 'Sorcerer'");
             }
             statement.executeUpdate(
                     """
@@ -69,7 +69,7 @@ public final class CharacterStore {
                     """);
             statement.executeUpdate(
                     "CREATE TABLE IF NOT EXISTS play_state (id INTEGER PRIMARY KEY REFERENCES"
-                        + " character_state(id), data TEXT NOT NULL)");
+                            + " character_state(id), data TEXT NOT NULL)");
         }
     }
 
@@ -96,7 +96,7 @@ public final class CharacterStore {
                     ResultSet result =
                             statement.executeQuery(
                                     "SELECT level, charisma, subclass, species, character_name FROM"
-                                        + " character_state WHERE id = 1")) {
+                                            + " character_state WHERE id = 1")) {
                 if (!result.next()) {
                     return CharacterState.defaults();
                 }
@@ -110,7 +110,7 @@ public final class CharacterStore {
                         ResultSet spellRows =
                                 spellStatement.executeQuery(
                                         "SELECT spell_name FROM chosen_spells WHERE character_id ="
-                                            + " 1")) {
+                                                + " 1")) {
                     while (spellRows.next()) {
                         spells.add(spellRows.getString(1));
                     }
@@ -191,7 +191,7 @@ public final class CharacterStore {
                 try (PreparedStatement spell =
                         connection.prepareStatement(
                                 "INSERT INTO chosen_spells (character_id, spell_name) VALUES"
-                                    + " (1, ?)")) {
+                                        + " (1, ?)")) {
                     for (String name : state.chosenSpells()) {
                         spell.setString(1, name);
                         spell.addBatch();
@@ -201,7 +201,7 @@ public final class CharacterStore {
                 try (PreparedStatement play =
                         connection.prepareStatement(
                                 "INSERT INTO play_state (id, data) VALUES (1, ?) ON CONFLICT(id) DO"
-                                    + " UPDATE SET data = excluded.data")) {
+                                        + " UPDATE SET data = excluded.data")) {
                     play.setString(1, state.play().encode());
                     play.executeUpdate();
                 }

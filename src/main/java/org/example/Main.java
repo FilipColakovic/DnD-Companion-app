@@ -111,7 +111,7 @@ public class Main {
                             JOptionPane.showMessageDialog(
                                     window,
                                     "Could not save your character. The window will stay open so"
-                                        + " you can try again.\n"
+                                            + " you can try again.\n"
                                             + store.path()
                                             + "\n"
                                             + error.getMessage(),

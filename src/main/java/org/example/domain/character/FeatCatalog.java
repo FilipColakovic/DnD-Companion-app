@@ -54,7 +54,7 @@ public final class FeatCatalog {
                 return "Requires level " + minimumLevel() + " (current: " + level + ")";
             if (category == Category.FIGHTING_STYLE)
                 return "Requires the Fighting Style feature; single-class Sorcerers do not have"
-                           + " it.";
+                        + " it.";
             if (name.equals("Actor") && charisma < 13)
                 return "Requires Charisma 13 (current: " + charisma + ")";
             return "";

@@ -70,7 +70,7 @@ public final class CombatLayoutChecks {
                 });
         System.out.println(
                 "Passed: save-only spell dossier fills available height and End Turn control is"
-                    + " removed.");
+                        + " removed.");
     }
 
     private static void layout(Container root) {

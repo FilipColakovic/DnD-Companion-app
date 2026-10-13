@@ -101,8 +101,8 @@ public final class DiceTrayChecks {
                 });
         System.out.println(
                 "Passed: live dice visibility, save-only effects, attack modifiers, save damage,"
-                    + " mixed profiles, effect dice, cantrip scaling, empty selection, and"
-                    + " unchanged resources.");
+                        + " mixed profiles, effect dice, cantrip scaling, empty selection, and"
+                        + " unchanged resources.");
     }
 
     private static SpellCatalog.Spell spell(String name) {

@@ -1,11 +1,11 @@
 package org.example.ui;
 
+import org.example.application.CharacterController;
 import org.example.domain.character.CharacterState;
 import org.example.domain.character.PlaySession;
 import org.example.ui.character.CharacterSheetPanel;
 import org.example.ui.character.FeatsPanel;
 import org.example.ui.character.MetamagicPanel;
-import org.example.application.CharacterController;
 import org.example.ui.common.AppStyle;
 import org.example.ui.common.ArcaneIcon;
 import org.example.ui.common.LiveView;
@@ -295,9 +295,13 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         return character;
     }
 
-    public CharacterController characterController() { return character; }
+    public CharacterController characterController() {
+        return character;
+    }
 
-    public SpellLibraryPanel libraryPanel() { return library; }
+    public SpellLibraryPanel libraryPanel() {
+        return library;
+    }
 
     public CastingPanel combatPanel() {
         return combat;

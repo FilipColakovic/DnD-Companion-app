@@ -119,10 +119,10 @@ final class FeatInspector extends JPanel implements LiveView {
         notesBody.add(
                 FeatComponents.text(
                         "Record ability choices, bonus spells and proficiencies here; apply their"
-                            + " effects on your sheet."
+                                + " effects on your sheet."
                                 + (feat.repeatable()
                                         ? " Record additional instances under the feat's"
-                                              + " repeatability conditions."
+                                                + " repeatability conditions."
                                         : ""),
                         11),
                 BorderLayout.NORTH);

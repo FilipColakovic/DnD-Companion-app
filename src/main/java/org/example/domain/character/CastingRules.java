@@ -1,24 +1,47 @@
 package org.example.domain.character;
 
-import java.util.Set;
 import org.example.domain.spells.SpellCatalog;
 
-/** Read-only cast validation and costs. A session applies spending only after validation succeeds. */
+import java.util.Set;
+
+/**
+ * Read-only cast validation and costs. A session applies spending only after validation succeeds.
+ */
 public final class CastingRules {
     private CastingRules() {}
-    public record Context(int level, boolean innate, boolean selected, boolean available,
-            Set<Metamagic> known, int freeCasts, int remainingSlots, int remainingPoints) {
-        public Context { known = Set.copyOf(known); }
+
+    public record Context(
+            int level,
+            boolean innate,
+            boolean selected,
+            boolean available,
+            Set<Metamagic> known,
+            int freeCasts,
+            int remainingSlots,
+            int remainingPoints) {
+        public Context {
+            known = Set.copyOf(known);
+        }
     }
+
     public static int metamagicCost(int level, boolean innate, Set<Metamagic> options) {
         int cost = options.stream().mapToInt(Metamagic::cost).sum();
-        if (level == 20 && innate) cost -= options.stream().mapToInt(Metamagic::cost).max().orElse(0);
+        if (level == 20 && innate)
+            cost -= options.stream().mapToInt(Metamagic::cost).max().orElse(0);
         return cost;
     }
-    public static String validate(SpellCatalog.Spell spell, int slot, boolean speciesFree,
-            Set<Metamagic> options, Context context) {
-        if (!context.selected() || !context.available()) return "Choose an available prepared spell or known cantrip.";
-        if (!options.isEmpty() && (context.level() < 2 || context.known().size() > Metamagic.limit(context.level())))
+
+    public static String validate(
+            SpellCatalog.Spell spell,
+            int slot,
+            boolean speciesFree,
+            Set<Metamagic> options,
+            Context context) {
+        if (!context.selected() || !context.available())
+            return "Choose an available prepared spell or known cantrip.";
+        if (!options.isEmpty()
+                && (context.level() < 2
+                        || context.known().size() > Metamagic.limit(context.level())))
             return "Metamagic choices exceed your current level's limit.";
         for (Metamagic option : options) {
             if (!context.known().contains(option) || !option.applies(spell))
@@ -32,7 +55,8 @@ public final class CastingRules {
         if (spell.level() > 0) {
             if (speciesFree) {
                 if (context.freeCasts() == 0 || slot != spell.level())
-                    return "No species free casts remain, or slot level differs from the spell's base level.";
+                    return "No species free casts remain, or slot level differs from the spell's"
+                               + " base level.";
             } else if (slot < spell.level() || slot > 9 || context.remainingSlots() == 0)
                 return "No appropriate spell slot remaining.";
         }

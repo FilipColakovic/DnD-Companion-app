@@ -297,7 +297,7 @@ public final class SpellLibraryChecks {
                                         && find(library, JButton.class, "Choose Fireball")
                                                 .isEnabled(),
                                 "Dormant prepared choices remain visible and removable after"
-                                    + " lowering level");
+                                        + " lowering level");
                         check(
                                 library.visibleSpellCount()
                                         == workspace.playSession().selection().catalog().stream()
@@ -306,7 +306,7 @@ public final class SpellLibraryChecks {
                                                                 ::selected)
                                                 .count(),
                                 "Prepared-only library includes chosen spells and automatic"
-                                    + " grants");
+                                        + " grants");
                         check(
                                 find(library, JButton.class, "Choose Fireball") != null,
                                 "Dormant spells remain reviewable in Prepared only");

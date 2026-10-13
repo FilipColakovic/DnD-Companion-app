@@ -1,12 +1,12 @@
 package org.example;
 
+import org.example.application.CharacterController;
 import org.example.domain.character.CharacterState;
 import org.example.domain.character.Metamagic;
 import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.persistence.CharacterStore;
 import org.example.ui.GrimoirePanel;
-import org.example.application.CharacterController;
 import org.example.ui.spells.CastingPanel;
 
 import java.awt.Component;
@@ -20,8 +20,6 @@ import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JSlider;
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
 /** Exercise the production close handler and a new app window against the same real SQLite file. */
@@ -43,10 +41,17 @@ public final class WindowPersistenceChecks {
                             CharacterController panel =
                                     ((GrimoirePanel) window.getContentPane()).characterPanel();
                             panel.setLevel(8);
-                            panel.setCharismaScore(panel.snapshot().charisma()+1);
+                            panel.setCharismaScore(panel.snapshot().charisma() + 1);
                             panel.selectSubclass(SorcererRules.Subclass.CLOCKWORK);
                             panel.selectSpecies(Species.INFERNAL_TIEFLING);
-                            panel.playSession().selection().choose(org.example.domain.spells.SpellCatalog.all().stream().filter(spell -> spell.name().equals("Shield")).findFirst().orElseThrow(), false);
+                            panel.playSession()
+                                    .selection()
+                                    .choose(
+                                            org.example.domain.spells.SpellCatalog.all().stream()
+                                                    .filter(spell -> spell.name().equals("Shield"))
+                                                    .findFirst()
+                                                    .orElseThrow(),
+                                            false);
                             panel.playSession().choose(Metamagic.QUICKENED, true);
                             panel.playSession()
                                     .setSheet(
@@ -91,7 +96,7 @@ public final class WindowPersistenceChecks {
                             }
                             CharacterController experimenting =
                                     ((GrimoirePanel) reopened.getContentPane()).characterPanel();
-                            experimenting.setCharismaScore(experimenting.snapshot().charisma()+1);
+                            experimenting.setCharismaScore(experimenting.snapshot().charisma() + 1);
                             CharacterState checkpoint = experimenting.snapshot();
                             GrimoirePanel workspace = (GrimoirePanel) reopened.getContentPane();
                             JCheckBox lock =
@@ -100,7 +105,7 @@ public final class WindowPersistenceChecks {
                             check(
                                     store.load().equals(checkpoint) && store.isSaveLocked(),
                                     "Checking save protection immediately commits a checkpoint and"
-                                        + " its lock");
+                                            + " its lock");
                             var linked = workspace.libraryPanel();
                             workspace.showPreparedSpells();
                             check(
@@ -124,30 +129,47 @@ public final class WindowPersistenceChecks {
                                     "Casting window spends resources in main-window model");
                             experimenting.playSession().appearance(true, 16);
                             experimenting.setLevel(20);
-                            experimenting.setCharismaScore(experimenting.snapshot().charisma()-1);
+                            experimenting.setCharismaScore(experimenting.snapshot().charisma() - 1);
                             experimenting.selectSubclass(SorcererRules.Subclass.WILD_MAGIC);
                             experimenting.selectSpecies(Species.WOOD_ELF);
-                            experimenting.playSession().selection().choose(org.example.domain.spells.SpellCatalog.all().stream().filter(spell -> spell.name().equals("Fireball")).findFirst().orElseThrow(), false);
+                            experimenting
+                                    .playSession()
+                                    .selection()
+                                    .choose(
+                                            org.example.domain.spells.SpellCatalog.all().stream()
+                                                    .filter(
+                                                            spell ->
+                                                                    spell.name().equals("Fireball"))
+                                                    .findFirst()
+                                                    .orElseThrow(),
+                                            false);
                             check(
                                     !experimenting.snapshot().equals(checkpoint)
                                             && store.load().equals(checkpoint),
                                     "Experimental inputs and spell choices do not change the"
-                                        + " checkpoint");
+                                            + " checkpoint");
                             find(workspace, JButton.class, "Restore saved").doClick(0);
                             check(
                                     experimenting.snapshot().equals(checkpoint)
                                             && experimenting.isSaveLocked(),
                                     "Restore saved returns all inputs and spell choices and keeps"
-                                        + " protection enabled");
+                                            + " protection enabled");
                             workspace.showPreparedSpells();
-                            check(linked.visibleSpellCount()==experimenting.playSession().selection().automaticCount()+checkpoint.chosenSpells().size(), "Restore updates the existing prepared library");
+                            check(
+                                    linked.visibleSpellCount()
+                                            == experimenting
+                                                            .playSession()
+                                                            .selection()
+                                                            .automaticCount()
+                                                    + checkpoint.chosenSpells().size(),
+                                    "Restore updates the existing prepared library");
                             experimenting.setLevel(1);
                             reopened.dispatchEvent(
                                     new WindowEvent(reopened, WindowEvent.WINDOW_CLOSING));
                             check(
                                     !reopened.isDisplayable() && store.load().equals(checkpoint),
                                     "Closing a protected session discards experiments without"
-                                        + " overwriting the save");
+                                            + " overwriting the save");
                             reopened = Main.createWindow(new CharacterStore(database));
                             experimenting =
                                     ((GrimoirePanel) reopened.getContentPane()).characterPanel();
@@ -166,7 +188,7 @@ public final class WindowPersistenceChecks {
                             check(
                                     !store.isSaveLocked() && store.load().equals(checkpoint),
                                     "Unchecking enables normal saving without immediately"
-                                        + " overwriting the checkpoint");
+                                            + " overwriting the checkpoint");
                             reopened.dispatchEvent(
                                     new WindowEvent(reopened, WindowEvent.WINDOW_CLOSING));
                             check(
@@ -185,7 +207,7 @@ public final class WindowPersistenceChecks {
                     });
             System.out.println(
                     "Passed: save/reopen, checkpoint lock, experimentation, live restore, protected"
-                        + " close, persistent lock, and unlock/save.");
+                            + " close, persistent lock, and unlock/save.");
         } finally {
             Files.deleteIfExists(database);
             Files.delete(directory);

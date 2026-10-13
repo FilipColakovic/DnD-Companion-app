@@ -72,7 +72,7 @@ public final class CharacterSummary extends JPanel {
         attack.setName("sidebar-atk");
         dc.setToolTipText(
                 "8 + proficiency + Charisma modifier; +1 while Innate Sorcery is active for"
-                    + " Sorcerer spells");
+                        + " Sorcerer spells");
         top.add(edit);
         top.add(tile("SORCERY PTS", points));
         resources.add(top, BorderLayout.NORTH);

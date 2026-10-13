@@ -240,7 +240,7 @@ public final class CharacterChoicesChecks {
                                                 panel,
                                                 JCheckBox.class,
                                                 "feat.Magic Initiate.cantrips option Word of"
-                                                    + " Radiance")
+                                                        + " Radiance")
                                         != null,
                                 "PHB cantrip choices include non-Free-Rules entries");
                         session.setSheet(

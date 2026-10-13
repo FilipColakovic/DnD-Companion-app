@@ -34,7 +34,6 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -310,7 +309,7 @@ public final class GrimoireChecks {
         check(
                 dashboard.snapshot().equals(saved) && dashboard.isSaveLocked(),
                 "Restore returns character, resources, choices, name and display settings,"
-                    + " preserving protection");
+                        + " preserving protection");
         dashboard.playSession().appearance(true, 14);
         preview(dashboard, "target/grimoire-dark-preview.png");
         Color dark = dashboard.getBackground();

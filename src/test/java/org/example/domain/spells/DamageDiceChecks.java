@@ -58,7 +58,7 @@ public final class DamageDiceChecks {
                 "No bonus exploding dice when the modifier is zero");
         System.out.println(
                 "Passed: spell damage profiles, upcasting, cantrip scaling, per-instance labels,"
-                    + " critical modifiers, and capped exploding dice.");
+                        + " critical modifiers, and capped exploding dice.");
     }
 
     private static DamageDice.Formula profile(String name, int slot, int level) {

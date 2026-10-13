@@ -1,35 +1,17 @@
 package org.example.ui.spells;
 
+import org.example.domain.character.CharacterState;
 import org.example.domain.character.SorcererRules;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellDetails;
 import org.example.domain.spells.SpellSelection;
 import org.example.ui.GrimoirePanel;
-import org.example.domain.character.CharacterState;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Window;
-import java.awt.image.BufferedImage;
-import java.io.File;
 
-import javax.imageio.ImageIO;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JSlider;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 public final class SpellBookChecks {
@@ -127,41 +109,78 @@ public final class SpellBookChecks {
         }
         check(!selection.choose(spell("Friends"), true).isEmpty(), "Enforce cantrip limit");
 
-        SwingUtilities.invokeAndWait(() -> {
-            GrimoirePanel workspace=new GrimoirePanel(CharacterState.defaults());
-            try {
-                var library=workspace.libraryPanel();
-                var editor=workspace.characterController();
-                var fireball=accessible(library,JButton.class,"Choose Fireball");
-                check(!fireball.isEnabled(),"Unavailable Fireball cannot be learned");
-                editor.setLevel(5);
-                check(accessible(library,JButton.class,"Choose Fireball").isEnabled(),"Live level change unlocks Fireball");
-                accessible(library,JButton.class,"Choose Fireball").doClick(0);
-                check(workspace.playSession().selection().selected(spell("Fireball")),"Library Learn updates manual choices");
-                var search=accessible(library,JTextField.class,"Search library spells");
-                search.setText("FIREBALL");
-                check(library.visibleSpellCount()==2,"Case-insensitive search includes Delayed Blast Fireball");
-                search.setText("no-such-spell");check(library.visibleSpellCount()==0,"Empty search");search.setText("");
-                workspace.showPreparedSpells();
-                check(library.visibleSpellCount()==workspace.playSession().selection().automaticCount()+1,"Prepared filter includes learned spell");
-                library.inspect("Fireball");
-                editor.setLevel(1);
-                check(editor.snapshot().chosenSpells().contains("Fireball"),"Dormant learned choices survive level decrease");
-                check(accessible(library,JButton.class,"Choose Fireball").isEnabled(),"Dormant learned spells remain removable");
-                accessible(library,JButton.class,"Choose Fireball").doClick(0);
-                check(!editor.snapshot().chosenSpells().contains("Fireball"),"Unlearn removes dormant spell");
-            } finally {workspace.dispose();}
-        });
-        System.out.println("Passed: full spell catalog, selection limits and live card-based spell learning and filtering.");
+        SwingUtilities.invokeAndWait(
+                () -> {
+                    GrimoirePanel workspace = new GrimoirePanel(CharacterState.defaults());
+                    try {
+                        var library = workspace.libraryPanel();
+                        var editor = workspace.characterController();
+                        var fireball = accessible(library, JButton.class, "Choose Fireball");
+                        check(!fireball.isEnabled(), "Unavailable Fireball cannot be learned");
+                        editor.setLevel(5);
+                        check(
+                                accessible(library, JButton.class, "Choose Fireball").isEnabled(),
+                                "Live level change unlocks Fireball");
+                        accessible(library, JButton.class, "Choose Fireball").doClick(0);
+                        check(
+                                workspace.playSession().selection().selected(spell("Fireball")),
+                                "Library Learn updates manual choices");
+                        var search = accessible(library, JTextField.class, "Search library spells");
+                        search.setText("FIREBALL");
+                        check(
+                                library.visibleSpellCount() == 2,
+                                "Case-insensitive search includes Delayed Blast Fireball");
+                        search.setText("no-such-spell");
+                        check(library.visibleSpellCount() == 0, "Empty search");
+                        search.setText("");
+                        workspace.showPreparedSpells();
+                        check(
+                                library.visibleSpellCount()
+                                        == workspace.playSession().selection().automaticCount() + 1,
+                                "Prepared filter includes learned spell");
+                        library.inspect("Fireball");
+                        editor.setLevel(1);
+                        check(
+                                editor.snapshot().chosenSpells().contains("Fireball"),
+                                "Dormant learned choices survive level decrease");
+                        check(
+                                accessible(library, JButton.class, "Choose Fireball").isEnabled(),
+                                "Dormant learned spells remain removable");
+                        accessible(library, JButton.class, "Choose Fireball").doClick(0);
+                        check(
+                                !editor.snapshot().chosenSpells().contains("Fireball"),
+                                "Unlearn removes dormant spell");
+                    } finally {
+                        workspace.dispose();
+                    }
+                });
+        System.out.println(
+                "Passed: full spell catalog, selection limits and live card-based spell learning"
+                    + " and filtering.");
     }
 
-    private static void check(boolean condition, String message) { if (!condition) throw new AssertionError(message); }
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
     private static <T extends Component> T accessible(Container root, Class<T> type, String name) {
         for (Component child : root.getComponents()) {
-            if (type.isInstance(child) && child.getAccessibleContext()!=null && name.equals(child.getAccessibleContext().getAccessibleName())) return type.cast(child);
-            if (child instanceof Container nested) { T result=accessible(nested,type,name); if(result!=null)return result; }
+            if (type.isInstance(child)
+                    && child.getAccessibleContext() != null
+                    && name.equals(child.getAccessibleContext().getAccessibleName()))
+                return type.cast(child);
+            if (child instanceof Container nested) {
+                T result = accessible(nested, type, name);
+                if (result != null) return result;
+            }
         }
         return null;
     }
-    private static SpellCatalog.Spell spell(String name) { return SpellCatalog.all().stream().filter(s->s.name().equals(name)).findFirst().orElseThrow(); }
+
+    private static SpellCatalog.Spell spell(String name) {
+        return SpellCatalog.all().stream()
+                .filter(s -> s.name().equals(name))
+                .findFirst()
+                .orElseThrow();
+    }
 }

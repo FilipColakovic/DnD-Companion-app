@@ -35,8 +35,8 @@ public final class SpellMechanics {
     private static final Set<String> ATTACKS =
             names(
                     "Bigby's Hand|Chill Touch|Chromatic Orb|Fire Bolt|Flame Blade|Ice Knife|Poison"
-                        + " Spray|Ray of Frost|Ray of Sickness|Scorching Ray|Shocking"
-                        + " Grasp|Sorcerous Burst|True Strike|Vampiric Touch|Witch Bolt");
+                            + " Spray|Ray of Frost|Ray of Sickness|Scorching Ray|Shocking"
+                            + " Grasp|Sorcerous Burst|True Strike|Vampiric Touch|Witch Bolt");
     private static final Set<String> DAMAGE_ROLLS =
             names(
                     "Acid Splash|Arms of Hadar|Bigby's Hand|Blight|Burning Hands|Chain"
@@ -66,9 +66,9 @@ public final class SpellMechanics {
     private static final Set<String> ADDITIONAL_TARGETS =
             names(
                     "Banishment|Blindness/Deafness|Chain Lightning|Charm Monster|Charm"
-                        + " Person|Command|Enhance Ability|Etherealness|Fly|Freedom of"
-                        + " Movement|Gaseous Form|Hold Monster|Hold"
-                        + " Person|Invisibility|Jump|Longstrider|Spider Climb");
+                            + " Person|Command|Enhance Ability|Etherealness|Fly|Freedom of"
+                            + " Movement|Gaseous Form|Hold Monster|Hold"
+                            + " Person|Invisibility|Jump|Longstrider|Spider Climb");
 
     public static boolean forcesSave(SpellCatalog.Spell spell) {
         return SAVES.contains(spell.name());
@@ -98,13 +98,13 @@ public final class SpellMechanics {
                         + " starts its turn in that fire.";
             case "Dimension Door" ->
                     "Teleportation; no normal damage. A blocked arrival causes 4d6 Force damage to"
-                        + " the travelers and the teleport fails.";
+                            + " the travelers and the teleport fails.";
             case "Teleport" ->
                     "Teleportation; no normal damage. A mishap causes 3d10 Force damage per"
-                        + " traveler or object; further mishaps can repeat it.";
+                            + " traveler or object; further mishaps can repeat it.";
             case "Etherealness" ->
                     "No normal damage. Returning inside an occupied space causes Force damage equal"
-                        + " to twice the distance shunted in feet.";
+                            + " to twice the distance shunted in feet.";
             case "Earthquake" ->
                     "Structures take 50 Bludgeoning damage per tremor. Collapsing structures can"
                         + " deal 12d6 Bludgeoning damage to nearby creatures; falling into fissures"
@@ -113,35 +113,35 @@ public final class SpellMechanics {
                     "A target with 100 HP or fewer dies; otherwise it takes 12d12 Psychic damage.";
             case "Ice Knife" ->
                     "Hit: 1d10 Piercing. Hit or miss: a Dexterity save against the explosion, 2d6"
-                        + " Cold on failure, plus 1d6 Cold per slot level above 1.";
+                            + " Cold on failure, plus 1d6 Cold per slot level above 1.";
             case "Ice Storm" ->
                     "Dexterity save: 2d10 Bludgeoning + 4d6 Cold; half on success. Only Bludgeoning"
-                        + " increases, by 1d10 per slot level above 4.";
+                            + " increases, by 1d10 per slot level above 4.";
             case "Vitriolic Sphere" ->
                     "Failed Dexterity save: 10d4 Acid now + 5d4 Acid at the end of the target's"
-                        + " next turn. Success: half the initial damage only. Initial damage"
-                        + " increases by 2d4 per slot level above 4.";
+                            + " next turn. Success: half the initial damage only. Initial damage"
+                            + " increases by 2d4 per slot level above 4.";
             case "Witch Bolt" ->
                     "Initial hit: 2d12 Lightning + 1d12 per slot level above 1. Subsequent Bonus"
-                        + " Action: 1d12 Lightning, even if the initial attack missed.";
+                            + " Action: 1d12 Lightning, even if the initial attack missed.";
             case "Hunger of Hadar" ->
                     "Start of turn: 2d6 Cold. End of turn: Dexterity save, 2d6 Acid on failure. Add"
                         + " 1d6 per slot level above 3 to either damage type, chosen when casting.";
             case "Meteor Swarm" ->
                     "Dexterity save: 20d6 Fire + 20d6 Bludgeoning, half on success; a creature in"
-                        + " overlapping spheres is affected once.";
+                            + " overlapping spheres is affected once.";
             case "Prismatic Spray" ->
                     "Roll the ray for each target. Red–blue deal 12d6 of the listed elemental type;"
-                        + " other rays impose conditions. Resolve the Prismatic Rays table.";
+                            + " other rays impose conditions. Resolve the Prismatic Rays table.";
             case "Delayed Blast Fireball" ->
                     "Explosion: 12d6 Fire + 1d6 per slot level above 7 + 1d6 per turn ended while"
-                        + " concentrating; Dexterity save for half.";
+                            + " concentrating; Dexterity save for half.";
             case "Fire Shield" ->
                     "A melee attacker within 5 feet takes 2d8 Fire (warm shield) or 2d8 Cold (chill"
-                        + " shield). The spell also grants the opposite resistance.";
+                            + " shield). The spell also grants the opposite resistance.";
             case "Flame Blade" ->
                     "Melee spell attack: 3d6 Fire + spellcasting ability modifier; add 1d6 per slot"
-                        + " level above 2.";
+                            + " level above 2.";
             case "Bigby's Hand" ->
                     "Clenched Fist: 5d8 Force on a spell attack hit (+2d8 per slot level above 5)."
                         + " Grasping Hand crush: 4d6 Bludgeoning + spellcasting ability modifier"
@@ -156,13 +156,13 @@ public final class SpellMechanics {
                         + " damage.";
             case "Enlarge/Reduce" ->
                     "Changes the target's weapon and Unarmed Strike damage by +1d4 (Enlarge) or"
-                        + " −1d4 (Reduce); this is not a separate spell damage roll.";
+                            + " −1d4 (Reduce); this is not a separate spell damage roll.";
             case "Wish" ->
                     "Resolve the chosen Wish effect or replicated spell. Stress damage is a"
-                        + " consequence of later casting, not Wish's primary damage.";
+                            + " consequence of later casting, not Wish's primary damage.";
             case "Animate Objects", "Summon Aberration", "Summon Construct", "Summon Dragon" ->
                     "The summoned creatures use their own stat-block attacks and effects. Their"
-                        + " attacks are not the caster's spell attack or damage rolls.";
+                            + " attacks are not the caster's spell attack or damage rolls.";
             default ->
                     hasDamageRoll(spell)
                             ? "Resolve damage timing, targets and conditions from the spell text."

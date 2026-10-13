@@ -26,7 +26,6 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -364,7 +363,7 @@ public final class FeatsChecks {
                 });
         System.out.println(
                 "Passed: 75 PHB feats, navigation, filters, prerequisites, notes, previews,"
-                    + " details, theme layout and checkpoint restoration.");
+                        + " details, theme layout and checkpoint restoration.");
     }
 
     private static <T extends Component> T accessible(Container root, Class<T> type, String name) {

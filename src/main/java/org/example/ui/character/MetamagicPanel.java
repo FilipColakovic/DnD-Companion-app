@@ -358,32 +358,32 @@ public final class MetamagicPanel extends JPanel implements LiveView {
         return switch (option) {
             case CAREFUL ->
                     "Protect chosen creatures on saving throws. Damage without a save is"
-                        + " unaffected.";
+                            + " unaffected.";
             case DISTANT ->
                     "Changes range, not area size. Self range and separate reaction triggers stay"
-                        + " unchanged.";
+                            + " unchanged.";
             case EMPOWERED ->
                     "Use after rolling damage. Reroll damage dice, not attack or effect-selection"
-                        + " dice.";
+                            + " dice.";
             case EXTENDED ->
                     "When concentration applies, its saves gain Advantage. Duration caps at 24"
-                        + " hours.";
+                            + " hours.";
             case HEIGHTENED ->
                     "Choose one target. Disadvantage applies to its saves against this spell.";
             case QUICKENED ->
                     "Only Action spells qualify. Preserve your Action while respecting the"
-                        + " leveled-spell restriction.";
+                            + " leveled-spell restriction.";
             case SEEKING ->
                     "Keep the new attack result. Can combine with another Metamagic option.";
             case SUBTLE ->
                     "Priced or consumed materials remain required. Other spell components are"
-                        + " removed.";
+                            + " removed.";
             case TRANSMUTED ->
                     "Replace a listed elemental damage type. Other damage types and effects stay"
-                        + " unchanged.";
+                            + " unchanged.";
             case TWINNED ->
                     "Requires additional creature targets on upcasting. Extra rays, darts and orb"
-                        + " leaps do not qualify.";
+                            + " leaps do not qualify.";
         };
     }
 

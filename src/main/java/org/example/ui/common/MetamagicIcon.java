@@ -60,14 +60,14 @@ public final class MetamagicIcon implements Icon {
                         g,
                         path(
                                 "M 0 -34 L 28 -18 L 28 12 C 28 26 0 36 0 36 C 0 36 -28 26 -28 12 L"
-                                    + " -28 -18 Z"),
+                                        + " -28 -18 Z"),
                         CREAM,
                         3);
                 shape(
                         g,
                         path(
                                 "M 0 -24 L 18 -12 L 18 10 C 18 20 0 28 0 28 C 0 28 -18 20 -18 10 L"
-                                    + " -18 -12 Z"),
+                                        + " -18 -12 Z"),
                         BLUE,
                         2);
                 circle(g, 0, 6, 6, Color.WHITE, 2.5f);
@@ -153,7 +153,7 @@ public final class MetamagicIcon implements Icon {
                         g,
                         path(
                                 "M 0 -28 C 8 -16 12 -6 12 2 C 12 9 6 14 0 14 C -6 14 -12 9 -12 2 C"
-                                    + " -12 -6 -8 -16 0 -28 Z"),
+                                        + " -12 -6 -8 -16 0 -28 Z"),
                         RED,
                         2.5f);
                 shape(g, polygon(18, -4, 28, 12, 12, 18), BLUE, 2);

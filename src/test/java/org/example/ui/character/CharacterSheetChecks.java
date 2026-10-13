@@ -168,7 +168,7 @@ public final class CharacterSheetChecks {
                                         && panel.playSession().sheet().field(Field.DEATH_FAILURES)
                                                 == 0,
                                 "Long Rest restores HP and dice and clears temporary/death"
-                                    + " trackers");
+                                        + " trackers");
                         accessible(sheet, JSpinner.class, "Current hit points").setValue(0);
                         check(
                                 !button(sheet, "Long Rest").isEnabled()
@@ -220,7 +220,7 @@ public final class CharacterSheetChecks {
                 });
         System.out.println(
                 "Passed: six abilities, 18 skills, saves and passives, vitals, rest/resource"
-                    + " tracking, commit/restore, legacy saves and both theme layouts.");
+                        + " tracking, commit/restore, legacy saves and both theme layouts.");
     }
 
     private static JButton button(Container root, String text) {

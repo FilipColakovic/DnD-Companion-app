@@ -136,7 +136,7 @@ public final class BackgroundChecks {
                         check(
                                 !session.snapshot().feats().containsKey("Skilled"),
                                 "Editing background-feat notes does not create an unrelated manual"
-                                    + " feat");
+                                        + " feat");
                         session.equipFeat(
                                 FeatCatalog.named("War Caster"), "Manual milestone", 17, true);
                         var noble = workspace.snapshot();
@@ -238,7 +238,7 @@ public final class BackgroundChecks {
                         check(
                                 !marker.isVisible() && !session.feats().containsKey("Keen Mind"),
                                 "Restoration updates the marker and removes experimental"
-                                    + " decisions");
+                                        + " decisions");
                         workspace.showBackgrounds();
                         JTextField search =
                                 accessible(workspace, JTextField.class, "Search backgrounds");
@@ -277,7 +277,7 @@ public final class BackgroundChecks {
                 });
         System.out.println(
                 "Passed: sixteen PHB backgrounds, scoped grants and decisions, skill-selecting"
-                    + " feats, live sidebar marker, persistence, restore, search and themes.");
+                        + " feats, live sidebar marker, persistence, restore, search and themes.");
     }
 
     private static void complete(PlaySession session) {

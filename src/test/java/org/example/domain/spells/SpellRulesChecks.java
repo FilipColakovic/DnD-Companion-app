@@ -22,8 +22,8 @@ public final class SpellRulesChecks {
         SwingUtilities.invokeAndWait(SpellRulesChecks::castingControls);
         System.out.println(
                 "Passed: all 178 spell entries and 1,780 compatibility decisions, corrected source"
-                    + " text, conditional damage, 2024 Metamagic regressions, and live casting"
-                    + " selections.");
+                        + " text, conditional damage, 2024 Metamagic regressions, and live casting"
+                        + " selections.");
     }
 
     private static void descriptions() {
@@ -157,11 +157,14 @@ public final class SpellRulesChecks {
                 twinActual.equals(twinExpected),
                 "Twinned's complete reviewed additional-target list");
         String[][] examples = {
-            {"CAREFUL", "Web", "Haste"}, {"DISTANT", "Chill Touch", "Burning Hands"},
-            {"EMPOWERED", "Fireball", "Web"}, {"EXTENDED", "Creation", "Synaptic Static"},
+            {"CAREFUL", "Web", "Haste"},
+            {"DISTANT", "Chill Touch", "Burning Hands"},
+            {"EMPOWERED", "Fireball", "Web"},
+            {"EXTENDED", "Creation", "Synaptic Static"},
             {"HEIGHTENED", "Synaptic Static", "Poison Spray"},
             {"QUICKENED", "Web", "Dragon's Breath"},
-            {"SEEKING", "Poison Spray", "Summon Construct"}, {"SUBTLE", "True Strike", ""},
+            {"SEEKING", "Poison Spray", "Summon Construct"},
+            {"SUBTLE", "True Strike", ""},
             {"TRANSMUTED", "Ice Storm", "Protection from Energy"},
             {"TWINNED", "Hold Person", "Chromatic Orb"}
         };

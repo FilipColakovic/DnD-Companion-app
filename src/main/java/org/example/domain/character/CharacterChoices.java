@@ -48,10 +48,10 @@ public final class CharacterChoices {
     private static final List<String> ARTISAN =
             names(
                     "Alchemist's Supplies|Brewer's Supplies|Calligrapher's Supplies|Carpenter's"
-                        + " Tools|Cartographer's Tools|Cobbler's Tools|Cook's"
-                        + " Utensils|Glassblower's Tools|Jeweler's Tools|Leatherworker's"
-                        + " Tools|Mason's Tools|Painter's Supplies|Potter's Tools|Smith's"
-                        + " Tools|Tinker's Tools|Weaver's Tools|Woodcarver's Tools");
+                            + " Tools|Cartographer's Tools|Cobbler's Tools|Cook's"
+                            + " Utensils|Glassblower's Tools|Jeweler's Tools|Leatherworker's"
+                            + " Tools|Mason's Tools|Painter's Supplies|Potter's Tools|Smith's"
+                            + " Tools|Tinker's Tools|Weaver's Tools|Woodcarver's Tools");
     private static final List<String> INSTRUMENTS =
             names("Bagpipes|Drum|Dulcimer|Flute|Horn|Lute|Lyre|Pan Flute|Shawm|Viol");
 
@@ -61,8 +61,8 @@ public final class CharacterChoices {
         list.addAll(
                 names(
                         "Dice Set|Dragonchess Set|Playing Card Set|Three-Dragon Ante Set|Disguise"
-                            + " Kit|Forgery Kit|Herbalism Kit|Navigator's Tools|Poisoner's"
-                            + " Kit|Thieves' Tools"));
+                                + " Kit|Forgery Kit|Herbalism Kit|Navigator's Tools|Poisoner's"
+                                + " Kit|Thieves' Tools"));
         return List.copyOf(list);
     }
 
@@ -77,12 +77,12 @@ public final class CharacterChoices {
                     "Cleric",
                             names(
                                     "Guidance|Light|Mending|Resistance|Sacred Flame|Spare the"
-                                        + " Dying|Thaumaturgy|Toll the Dead|Word of Radiance"),
+                                            + " Dying|Thaumaturgy|Toll the Dead|Word of Radiance"),
                     "Druid",
                             names(
                                     "Druidcraft|Elementalism|Guidance|Mending|Message|Poison"
-                                        + " Spray|Produce Flame|Resistance|Shillelagh|Spare the"
-                                        + " Dying|Starry Wisp|Thorn Whip|Thunderclap"),
+                                            + " Spray|Produce Flame|Resistance|Shillelagh|Spare the"
+                                            + " Dying|Starry Wisp|Thorn Whip|Thunderclap"),
                     "Wizard",
                             names(
                                     "Acid Splash|Blade Ward|Chill Touch|Dancing"
@@ -102,12 +102,12 @@ public final class CharacterChoices {
                     "Druid",
                             names(
                                     "Animal Friendship|Charm Person|Create or Destroy Water|Cure"
-                                        + " Wounds|Detect Magic|Detect Poison and"
-                                        + " Disease|Entangle|Faerie Fire|Fog"
-                                        + " Cloud|Goodberry|Healing Word|Ice"
-                                        + " Knife|Jump|Longstrider|Protection from Evil and"
-                                        + " Good|Purify Food and Drink|Speak with"
-                                        + " Animals|Thunderwave"),
+                                            + " Wounds|Detect Magic|Detect Poison and"
+                                            + " Disease|Entangle|Faerie Fire|Fog"
+                                            + " Cloud|Goodberry|Healing Word|Ice"
+                                            + " Knife|Jump|Longstrider|Protection from Evil and"
+                                            + " Good|Purify Food and Drink|Speak with"
+                                            + " Animals|Thunderwave"),
                     "Wizard",
                             names(
                                     "Alarm|Burning Hands|Charm Person|Chromatic Orb|Color"
@@ -155,7 +155,7 @@ public final class CharacterChoices {
                     "dragonborn.ancestry",
                     "Dragonborn · Draconic Ancestry",
                     "Choose an ancestor. This determines your breath weapon damage and damage"
-                        + " resistance.",
+                            + " resistance.",
                     1,
                     names(
                             "Black — Acid|Blue — Lightning|Brass — Fire|Bronze — Lightning|Copper —"
@@ -169,8 +169,8 @@ public final class CharacterChoices {
                     1,
                     names(
                             "Cloud — Cloud's Jaunt|Fire — Fire's Burn|Frost — Frost's Chill|Hill —"
-                                + " Hill's Tumble|Stone — Stone's Endurance|Storm — Storm's"
-                                + " Thunder"));
+                                    + " Hill's Tumble|Stone — Stone's Endurance|Storm — Storm's"
+                                    + " Thunder"));
     public static final Choice SKILLED =
             new Choice(
                     "feat.Skilled",
@@ -345,7 +345,7 @@ public final class CharacterChoices {
                             "feat.Skill Expert.expertise",
                             "Skill Expert · Expertise",
                             "Choose a proficient skill without expertise. Choose your new"
-                                + " proficiency first if necessary.",
+                                    + " proficiency first if necessary.",
                             1,
                             eligible));
         }
@@ -444,7 +444,7 @@ public final class CharacterChoices {
                         prefix + ".abilities",
                         background.name() + " · Ability increases",
                         "Record +2/+1 or +1 to all three. Enter final ability scores on your sheet;"
-                            + " this selection does not add the increases again.",
+                                + " this selection does not add the increases again.",
                         1,
                         allocations));
         List<String> tools =
@@ -467,7 +467,7 @@ public final class CharacterChoices {
                         prefix + ".equipment",
                         background.name() + " · Starting equipment",
                         "Record your starting-equipment option. Equipment and gold are managed on"
-                            + " your sheet.",
+                                + " your sheet.",
                         1,
                         List.of("Equipment package", "50 GP")));
         if (background.name().equals("Wayfarer")
@@ -477,7 +477,7 @@ public final class CharacterChoices {
                             prefix + ".gaming",
                             background.name() + " · Equipment gaming set",
                             "Choose the gaming set in your equipment package; this does not grant"
-                                + " proficiency.",
+                                    + " proficiency.",
                             1,
                             GAMING));
         addFeatChoices(

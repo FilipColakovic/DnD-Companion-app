@@ -1,5 +1,6 @@
 package org.example.persistence;
 
+import org.example.application.CharacterController;
 import org.example.domain.character.CharacterState;
 import org.example.domain.character.Metamagic;
 import org.example.domain.character.PlaySession;
@@ -7,9 +8,7 @@ import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellSelection;
-import org.example.application.CharacterController;
 import org.example.ui.spells.SpellLibraryPanel;
-
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -104,14 +103,14 @@ public final class CharacterStoreChecks {
             check(
                     new CharacterStore(database).load().equals(played) && store.isSaveLocked(),
                     "Resources, rest usage, Metamagic, turn state and appearance persist atomically"
-                        + " in checkpoint");
+                            + " in checkpoint");
             try (var connection =
                             DriverManager.getConnection(
                                     "jdbc:sqlite:" + database.toAbsolutePath());
                     var statement = connection.createStatement()) {
                 statement.execute(
                         "CREATE TRIGGER fail_play_update BEFORE UPDATE ON play_state BEGIN SELECT"
-                            + " RAISE(ABORT, 'Test play save failure'); END");
+                                + " RAISE(ABORT, 'Test play save failure'); END");
             }
             try {
                 store.save(first, false);
@@ -181,7 +180,8 @@ public final class CharacterStoreChecks {
                         check(
                                 panel.snapshot().equals(first),
                                 "Main window restores inputs and manual choices");
-                        SpellLibraryPanel spellbook = new SpellLibraryPanel(panel.playSession(), panel::snapshot);
+                        SpellLibraryPanel spellbook =
+                                new SpellLibraryPanel(panel.playSession(), panel::snapshot);
                         check(
                                 panel.snapshot().chosenSpells().equals(first.chosenSpells()),
                                 "Opening the spellbook does not add automatic grants to the save");
@@ -225,7 +225,7 @@ public final class CharacterStoreChecks {
             check(!store.isSaveLocked(), "Legacy saves default to normal saving");
             System.out.println(
                     "Passed: SQLite reopen, replacement, dormant choices, rollback, empty choices,"
-                        + " and UI restoration.");
+                            + " and UI restoration.");
         } finally {
             Files.deleteIfExists(database);
             Files.delete(directory);

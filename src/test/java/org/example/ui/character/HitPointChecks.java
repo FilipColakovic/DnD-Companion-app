@@ -210,7 +210,7 @@ public final class HitPointChecks {
                 });
         System.out.println(
                 "Passed: fixed HP at levels 1–20, CON and HP bonuses, wounds and zero HP,"
-                    + " manual/automatic modes, live controls, SQLite and legacy restoration.");
+                        + " manual/automatic modes, live controls, SQLite and legacy restoration.");
     }
 
     private static <T extends Component> T accessible(Container root, Class<T> type, String name) {

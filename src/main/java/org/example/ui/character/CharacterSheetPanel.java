@@ -1,6 +1,11 @@
 package org.example.ui.character;
 
-import org.example.domain.character.BackgroundCatalog;
+import static org.example.ui.character.CharacterSheetComponents.card;
+import static org.example.ui.character.CharacterSheetComponents.column;
+import static org.example.ui.character.CharacterSheetComponents.labelled;
+import static org.example.ui.character.CharacterSheetComponents.metric;
+import static org.example.ui.character.CharacterSheetComponents.signed;
+
 import org.example.domain.character.CharacterChoices;
 import org.example.domain.character.CharacterSheet;
 import org.example.domain.character.CharacterSheet.Ability;
@@ -12,55 +17,34 @@ import org.example.domain.character.FeatCatalog;
 import org.example.domain.character.Metamagic;
 import org.example.domain.character.PlaySession;
 import org.example.domain.character.SorcererRules;
-import org.example.domain.character.Species;
 import org.example.domain.spells.SpellCatalog;
 import org.example.ui.GrimoirePanel;
 import org.example.ui.common.AppStyle;
 import org.example.ui.common.LiveView;
-import org.example.ui.common.PillSelector;
 import org.example.ui.spells.SpellDetailPanel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
-import javax.swing.text.JTextComponent;
 
 /** Live single-character sheet based on the supplied three-column Bauhaus editor. */
 public final class CharacterSheetPanel extends JPanel implements LiveView {
@@ -68,38 +52,20 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
     private final org.example.application.CharacterController editor;
     private final PlaySession session;
     private final CharacterChoicesPanel choices;
-    private final JTextField name = new JTextField(20),
-            background = new JTextField(15),
-            alignment = new JTextField(12);
-    private final SubclassSelector subclass;
-    private final PillSelector<Species> species;
-    private final JSpinner level, hitPoints, maxHitPoints;
-    private final EnumMap<Ability, JSpinner> scores = new EnumMap<>(Ability.class);
-    private final EnumMap<Ability, JLabel> modifiers = new EnumMap<>(Ability.class),
-            saves = new EnumMap<>(Ability.class);
-    private final EnumMap<Field, JSpinner> fields = new EnumMap<>(Field.class);
-    private final EnumMap<Field, List<JCheckBox>> deathMarkers = new EnumMap<>(Field.class);
-    private final EnumMap<Skill, SkillProficiencyRow> skillRows = new EnumMap<>(Skill.class);
-    private final JLabel skillLegend = AppStyle.mono("", 11);
+    private final CharacterFormBindings bindings;
+    private final CharacterIdentityPanel identity;
+    private final CharacterVitalsPanel vitals;
+    private final CharacterAbilityPanel abilities;
+    private final CharacterSkillsPanel skills;
+    private final CharacterTrainingPanel training;
+    private final CharacterSaveControls saveControls;
     private final EnumMap<Skill, JLabel> passives = new EnumMap<>(Skill.class);
     private final JSpinner sorceryPoints;
     private final Map<Integer, JSpinner> spellSlots = new LinkedHashMap<>();
-    private final JLabel armor = AppStyle.label("", 22, true),
-            initiative = AppStyle.label("", 22, true),
-            proficiency = AppStyle.label("", 22, true),
-            dc = AppStyle.label("", 15, true);
-    private final JLabel hpLabel = AppStyle.label("", 14, true),
-            hitDice = AppStyle.label("", 12, true),
-            status = AppStyle.label("", 11, false);
-    private final JProgressBar hpBar = new JProgressBar();
-    private final JCheckBox inspiration = new JCheckBox("Heroic Inspiration");
-    private final JCheckBox automaticHp = new JCheckBox("Calculate maximum HP from class");
-    private final JTextArea hpCalculation = FeatComponents.text("", 11);
-    private final JTextArea languages = new JTextArea(2, 16), training = new JTextArea(3, 16);
-    private final JTextArea grantedTools = FeatComponents.text("", 12);
+    private final JLabel status = AppStyle.label("", 11, false);
     private final JPanel features = AppStyle.section(new GridBagLayout()),
             featList = AppStyle.section(new GridBagLayout());
-    private final JButton innate, save, spendHitDie, discard, shortRest, longRest;
+    private final JButton innate, shortRest, longRest;
     private final Runnable listener = this::refresh;
     private final PropertyChangeListener stateListener = event -> refresh();
     private boolean updating = true, disposed;
@@ -111,6 +77,7 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         this.workspace = workspace;
         editor = workspace.characterPanel();
         session = workspace.playSession();
+        bindings = new CharacterFormBindings(workspace, () -> updating);
         setBorder(new EmptyBorder(12, 12, 12, 12));
         JPanel content = new FeatComponents.WidthPanel(new GridBagLayout());
         JPanel heading = FeatComponents.card(new BorderLayout(10, 6));
@@ -133,151 +100,16 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         heading.add(restActions, BorderLayout.SOUTH);
         FeatComponents.row(content, heading);
 
-        JPanel identity = FeatComponents.card(new GridBagLayout());
-        name.setName("character-name");
-        name.getAccessibleContext().setAccessibleName("Character name");
-        name.setText(editor.characterName());
-        bindText(
-                name,
-                value -> {
-                    String clean = value.strip();
-                    if (!clean.isEmpty() && clean.length() <= 60) editor.setCharacterName(clean);
-                });
-        FeatComponents.row(identity, labelled("CHARACTER NAME & EPITHET", name));
-        JPanel origin = new FeatComponents.WrapPanel(8);
-        subclass = new SubclassSelector(editor::selectSubclass);
-        species =
-                new PillSelector<>(List.of(Species.values()), Species.HUMAN, editor::selectSpecies);
-        species.getAccessibleContext().setAccessibleName("Select PHB 2024 species and lineage");
-        origin.add(labelled("SUBCLASS", subclass));
-        origin.add(labelled("SPECIES & LINEAGE", species));
-        level = spinner("Character level", 1, 1, 20, value -> editor.setLevel(value));
-        origin.add(labelled("CLASS LEVEL", level));
-        origin.add(labelled("BACKGROUND", background));
-        origin.add(labelled("ALIGNMENT", alignment));
-        FeatComponents.row(identity, origin);
-        origin.add(AppStyle.compactButton("Choose background", workspace::showBackgrounds));
-        bindText(
-                background,
-                value -> session.setSheet(session.sheet().withNote(Note.BACKGROUND, value)));
-        bindText(
-                alignment,
-                value -> session.setSheet(session.sheet().withNote(Note.ALIGNMENT, value)));
+        identity = new CharacterIdentityPanel(bindings);
         FeatComponents.row(content, identity);
         choices = new CharacterChoicesPanel(session);
         FeatComponents.row(content, choices);
 
         JPanel left = column(), middle = column(), right = column();
-        JPanel vitals = card("COMBAT VITALS");
-        JPanel metrics = new JPanel(new GridLayout(1, 3, 6, 0));
-        metrics.setOpaque(false);
-        metrics.add(metric("ARMOR CLASS", armor));
-        metrics.add(metric("INITIATIVE", initiative));
-        metrics.add(metric("PROF BONUS", proficiency));
-        FeatComponents.row(vitals, metrics);
-        JPanel basics = new FeatComponents.WrapPanel(7);
-        basics.add(
-                labelled(
-                        "AC OVERRIDE (0 = UNARMORED)",
-                        field(Field.AC_OVERRIDE, "Armor class override")));
-        basics.add(labelled("SPEED (FEET)", field(Field.SPEED, "Speed")));
-        FeatComponents.row(vitals, basics);
-        JPanel hp = AppStyle.section(new BorderLayout(0, 5));
-        hp.add(hpLabel, BorderLayout.NORTH);
-        hpBar.setStringPainted(true);
-        hpBar.setForeground(AppStyle.ERROR);
-        hpBar.setBorder(BorderFactory.createLineBorder(AppStyle.LINE));
-        hp.add(hpBar, BorderLayout.CENTER);
-        JPanel hpInputs = new FeatComponents.WrapPanel(6);
-        hitPoints = spinner("Current hit points", 0, 0, 9999, session::setCurrentHitPoints);
-        maxHitPoints =
-                spinner(
-                        "Maximum hit points",
-                        0,
-                        0,
-                        9999,
-                        value -> session.setHitPoints(Math.min(value, session.hitPoints()), value));
-        hpInputs.add(labelled("CURRENT HP", hitPoints));
-        hpInputs.add(labelled("MAX HP", maxHitPoints));
-        hpInputs.add(labelled("TEMP HP", field(Field.TEMP_HP, "Temporary hit points")));
-        hp.add(hpInputs, BorderLayout.SOUTH);
-        FeatComponents.row(vitals, FeatComponents.block("HIT POINT POOL", hp));
-        automaticHp.getAccessibleContext().setAccessibleName("Automatic maximum HP");
-        AppStyle.roundButton(automaticHp);
-        automaticHp.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        automaticHp.addActionListener(
-                event -> {
-                    if (!updating) session.setAutomaticHp(automaticHp.isSelected());
-                });
-        FeatComponents.row(vitals, automaticHp);
-        FeatComponents.row(vitals, hpCalculation);
-        JPanel dice = new FeatComponents.WrapPanel(6);
-        dice.add(hitDice);
-        dice.add(labelled("SPENT", field(Field.SPENT_HIT_DICE, "Spent hit dice")));
-        spendHitDie = AppStyle.compactButton("Spend d6 Hit Die", this::spendHitDie);
-        dice.add(spendHitDie);
-        FeatComponents.row(vitals, dice);
-        spendHitDie.setToolTipText(
-                "During a Short Rest, spend one available Sorcerer Hit Die and heal by d6 + CON"
-                    + " modifier");
-        JPanel death = new FeatComponents.WrapPanel(6);
-        death.add(labelled("DEATH SAVE SUCCESSES", deathMarks(Field.DEATH_SUCCESSES, "Success")));
-        death.add(labelled("DEATH SAVE FAILURES", deathMarks(Field.DEATH_FAILURES, "Failure")));
-        FeatComponents.row(vitals, death);
-        AppStyle.roundButton(inspiration);
-        inspiration.addActionListener(
-                event -> {
-                    if (!updating)
-                        session.setSheet(
-                                session.sheet()
-                                        .withField(
-                                                Field.INSPIRATION,
-                                                inspiration.isSelected() ? 1 : 0));
-                });
-        FeatComponents.row(vitals, inspiration);
+        vitals = new CharacterVitalsPanel(bindings, status::setText);
         FeatComponents.row(left, vitals);
-
-        JPanel attributes = card("ABILITY ATTRIBUTES");
-        JPanel matrix = new JPanel(new GridLayout(0, 2, 7, 7));
-        matrix.setOpaque(false);
-        for (Ability ability : Ability.values()) {
-            JPanel tile =
-                    AppStyle.surfacePanel(
-                            new BorderLayout(0, 5),
-                            ability == Ability.CHA ? "slotAvailable" : "low");
-            tile.setBorder(
-                    BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(AppStyle.LINE),
-                            new EmptyBorder(8, 8, 8, 8)));
-            JPanel label = AppStyle.section(new BorderLayout());
-            label.add(AppStyle.mono(ability.name(), 11), BorderLayout.WEST);
-            JLabel saving = AppStyle.mono("", 10);
-            saves.put(ability, saving);
-            label.add(saving, BorderLayout.EAST);
-            tile.add(label, BorderLayout.NORTH);
-            JPanel value = AppStyle.section(new BorderLayout(8, 0));
-            JLabel modifier = AppStyle.label("", 23, true);
-            modifiers.put(ability, modifier);
-            value.add(modifier, BorderLayout.WEST);
-            JSpinner score =
-                    spinner(
-                            ability.name() + " score",
-                            ability == Ability.CHA ? editor.snapshot().charisma() : 10,
-                            1,
-                            30,
-                            number -> {
-                                if (ability == Ability.CHA) editor.setCharismaScore(number);
-                                else session.setSheet(session.sheet().withAbility(ability, number));
-                            });
-            scores.put(ability, score);
-            value.add(score, BorderLayout.EAST);
-            tile.add(value, BorderLayout.CENTER);
-            matrix.add(tile);
-        }
-        FeatComponents.row(attributes, matrix);
-        FeatComponents.row(attributes, metric("SORCERER SPELL SAVE DC", dc));
-        FeatComponents.row(left, attributes);
-
+        abilities = new CharacterAbilityPanel(bindings);
+        FeatComponents.row(left, abilities);
         JPanel senses = card("PASSIVE SENSES");
         JPanel passiveTiles = new JPanel(new GridLayout(1, 3, 6, 0));
         passiveTiles.setOpaque(false);
@@ -289,48 +121,13 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         }
         FeatComponents.row(senses, passiveTiles);
         FeatComponents.row(middle, senses);
-        JPanel skills = card("SKILL PROFICIENCIES");
-        skillLegend.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 11));
-        FeatComponents.row(skills, skillLegend);
-        for (Skill skill : Skill.values()) {
-            SkillProficiencyRow row =
-                    new SkillProficiencyRow(
-                            skill,
-                            tier -> {
-                                if (!updating)
-                                    session.setSheet(session.sheet().withSkill(skill, tier));
-                            },
-                            () -> rollSkill(skill));
-            skillRows.put(skill, row);
-            FeatComponents.row(skills, row);
-        }
+        skills = new CharacterSkillsPanel(bindings, this::rollSkill);
         FeatComponents.row(middle, skills);
-
-        JPanel gear = card("TRAINING & GEAR");
-        training.setLineWrap(true);
-        training.setWrapStyleWord(true);
-        languages.setLineWrap(true);
-        languages.setWrapStyleWord(true);
-        training.getAccessibleContext().setAccessibleName("Training and equipment notes");
-        languages.getAccessibleContext().setAccessibleName("Languages and tools");
-        bindText(
-                training,
-                value -> session.setSheet(session.sheet().withNote(Note.TRAINING, value)));
-        bindText(
-                languages,
-                value -> session.setSheet(session.sheet().withNote(Note.LANGUAGES, value)));
-        JScrollPane trainingInput = FeatComponents.scroll(training),
-                languageInput = FeatComponents.scroll(languages);
-        trainingInput.setBorder(BorderFactory.createLineBorder(AppStyle.LINE));
-        languageInput.setBorder(BorderFactory.createLineBorder(AppStyle.LINE));
-        FeatComponents.row(gear, labelled("WEAPON / ARMOR TRAINING & EQUIPMENT", trainingInput));
-        grantedTools.getAccessibleContext().setAccessibleName("Granted tool proficiencies");
-        FeatComponents.row(gear, grantedTools);
-        FeatComponents.row(gear, labelled("LANGUAGES & TOOLS", languageInput));
-        FeatComponents.row(right, gear);
+        training = new CharacterTrainingPanel(bindings);
+        FeatComponents.row(right, training);
         JPanel resources = card("SPELLCASTING RESOURCES");
         sorceryPoints =
-                spinner(
+                bindings.spinner(
                         "Remaining Sorcery Points",
                         session.remainingPoints(),
                         0,
@@ -342,7 +139,7 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         for (int slot = 1; slot <= 9; slot++) {
             int tier = slot;
             JSpinner remaining =
-                    spinner(
+                    bindings.spinner(
                             "Remaining level " + tier + " slots",
                             session.remainingSlots(tier),
                             0,
@@ -412,154 +209,13 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         FeatComponents.row(selectedFeats, featList);
         FeatComponents.row(content, selectedFeats);
         add(FeatComponents.scroll(content), BorderLayout.CENTER);
-        JPanel footer = FeatComponents.card(new BorderLayout(8, 0));
-        footer.add(status, BorderLayout.CENTER);
-        JPanel actions = AppStyle.section(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        discard = AppStyle.compactButton("Discard edits", editor::restoreSaved);
-        actions.add(discard);
-        save = AppStyle.primaryButton("Commit to grimoire", this::commit);
-        save.putClientProperty("tactileRole", "red");
-        actions.add(save);
-        footer.add(actions, BorderLayout.EAST);
-        add(footer, BorderLayout.SOUTH);
+        saveControls = new CharacterSaveControls(editor, status, this::commit);
+        add(saveControls, BorderLayout.SOUTH);
         session.addListener(listener);
         session.selection().addChangeListener(listener);
         editor.addPropertyChangeListener("characterState", stateListener);
         updating = false;
         refresh();
-    }
-
-    private static JPanel column() {
-        return AppStyle.section(new GridBagLayout());
-    }
-
-    private static JPanel card(String title) {
-        JPanel card = FeatComponents.card(new GridBagLayout());
-        FeatComponents.row(card, AppStyle.label(title, 15, true));
-        return card;
-    }
-
-    private static JPanel labelled(String title, JComponent component) {
-        JPanel panel = AppStyle.section(new BorderLayout(0, 5));
-        panel.add(AppStyle.mono(title, 10), BorderLayout.NORTH);
-        panel.add(component, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private static JPanel metric(String title, JLabel value) {
-        JPanel panel = AppStyle.surfacePanel(new BorderLayout(0, 5), "low");
-        panel.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(AppStyle.LINE),
-                        new EmptyBorder(7, 7, 7, 7)));
-        panel.add(AppStyle.mono(title, 9), BorderLayout.NORTH);
-        panel.add(value, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private JSpinner spinner(String accessible, int initial, int min, int max, IntConsumer setter) {
-        JSpinner spinner = new JSpinner(new SpinnerNumberModel(initial, min, max, 1));
-        spinner.setBorder(BorderFactory.createLineBorder(AppStyle.LINE));
-        spinner.setPreferredSize(new Dimension(76, 32));
-        spinner.getAccessibleContext().setAccessibleName(accessible);
-        spinner.addChangeListener(
-                e -> {
-                    if (!updating) setter.accept((Integer) spinner.getValue());
-                });
-        return spinner;
-    }
-
-    private JSpinner field(Field field, String title) {
-        JSpinner spinner =
-                spinner(
-                        title,
-                        field.initial,
-                        field.minimum,
-                        field.maximum,
-                        value -> session.setSheet(session.sheet().withField(field, value)));
-        fields.put(field, spinner);
-        return spinner;
-    }
-
-    private void bindText(JTextComponent component, Consumer<String> setter) {
-        int limit = component == name ? 60 : 2000;
-        ((AbstractDocument) component.getDocument())
-                .setDocumentFilter(
-                        new DocumentFilter() {
-                            @Override
-                            public void insertString(
-                                    FilterBypass b, int offset, String text, AttributeSet attrs)
-                                    throws BadLocationException {
-                                if (b.getDocument().getLength() + text.length() <= limit)
-                                    super.insertString(b, offset, text, attrs);
-                            }
-
-                            @Override
-                            public void replace(
-                                    FilterBypass b,
-                                    int offset,
-                                    int length,
-                                    String text,
-                                    AttributeSet attrs)
-                                    throws BadLocationException {
-                                if (b.getDocument().getLength()
-                                                - length
-                                                + (text == null ? 0 : text.length())
-                                        <= limit) super.replace(b, offset, length, text, attrs);
-                            }
-                        });
-        component
-                .getDocument()
-                .addDocumentListener(
-                        new DocumentListener() {
-                            public void insertUpdate(DocumentEvent e) {
-                                update();
-                            }
-
-                            public void removeUpdate(DocumentEvent e) {
-                                update();
-                            }
-
-                            public void changedUpdate(DocumentEvent e) {
-                                update();
-                            }
-
-                            private void update() {
-                                if (!updating) setter.accept(component.getText());
-                            }
-                        });
-    }
-
-    private static String signed(int number) {
-        return String.format("%+d", number);
-    }
-
-    private JPanel deathMarks(Field field, String title) {
-        JPanel panel = AppStyle.section(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        List<JCheckBox> markers = new ArrayList<>();
-        for (int index = 0; index < 3; index++) {
-            int mark = index;
-            JCheckBox box = new JCheckBox();
-            AppStyle.roundButton(box);
-            box.getAccessibleContext()
-                    .setAccessibleName(
-                            "Death save " + title.toLowerCase(Locale.ROOT) + " " + (index + 1));
-            box.addActionListener(
-                    event -> {
-                        if (!updating)
-                            session.setSheet(
-                                    session.sheet()
-                                            .withField(field, box.isSelected() ? mark + 1 : mark));
-                    });
-            markers.add(box);
-            panel.add(box);
-        }
-        deathMarkers.put(field, markers);
-        return panel;
-    }
-
-    private static void text(JTextComponent component, String value) {
-        if (!component.getText().equals(value)) component.setText(value);
     }
 
     public void refresh() {
@@ -571,116 +227,18 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
             var stats = SorcererRules.calculate(state.level(), state.charisma(), state.subclass());
             boolean restored = restoreRevision != session.restoreRevision();
             restoreRevision = session.restoreRevision();
-            if (restored || !name.hasFocus()) text(name, state.name());
-            text(background, sheet.note(Note.BACKGROUND));
-            text(alignment, sheet.note(Note.ALIGNMENT));
-            text(training, sheet.note(Note.TRAINING));
-            text(languages, sheet.note(Note.LANGUAGES));
-            background.setEditable(BackgroundCatalog.selected(sheet).isEmpty());
-            background.setToolTipText(
-                    BackgroundCatalog.selected(sheet).isPresent()
-                            ? "Selected PHB background; change it in Feats → Backgrounds"
-                            : "Free-form background note; use Choose background to select a PHB"
-                                  + " background");
-            subclass.setSubclass(state.subclass());
-            species.setSelectedOption(state.species());
-            level.setValue(state.level());
-            ((SpinnerNumberModel) hitPoints.getModel()).setMaximum(session.maxHitPoints());
-            hitPoints.setValue(session.hitPoints());
-            maxHitPoints.setValue(session.maxHitPoints());
-            fields.forEach((field, spinner) -> spinner.setValue(sheet.field(field)));
-            automaticHp.setSelected(session.automaticHp());
-            maxHitPoints.setEnabled(!session.automaticHp());
-            maxHitPoints.setToolTipText(
-                    session.automaticHp()
-                            ? "Calculated from level, Constitution and HP bonuses"
-                            : "Manual maximum for rolled HP or a table override");
-            hpCalculation.setText(
-                    (session.automaticHp() ? "Calculated: " : "Fixed-value reference: ")
-                            + session.hpCalculation().explanation()
-                            + " = "
-                            + session.hpCalculation().maximum()
-                            + " HP");
-            deathMarkers.forEach(
-                    (field, markers) -> {
-                        for (int index = 0; index < markers.size(); index++)
-                            markers.get(index).setSelected(index < sheet.field(field));
-                    });
-            inspiration.setSelected(sheet.field(Field.INSPIRATION) == 1);
-            hpLabel.setText("HIT POINTS " + session.hitPoints() + " / " + session.maxHitPoints());
-            hpBar.setMaximum(Math.max(1, session.maxHitPoints()));
-            hpBar.setValue(session.hitPoints());
-            hpBar.setString(
-                    session.maxHitPoints() == 0
-                            ? "Set maximum HP"
-                            : session.hitPoints() + " / " + session.maxHitPoints());
-            armor.setText(Integer.toString(sheet.armorClass(state.charisma())));
-            armor.setToolTipText(
-                    "Unarmored: 10 + DEX modifier unless AC override is set. Mage Armor: "
-                            + (13
-                                    + CharacterSheet.modifier(
-                                            sheet.score(Ability.DEX, state.charisma()))));
-            initiative.setText(
-                    signed(CharacterSheet.modifier(sheet.score(Ability.DEX, state.charisma()))));
-            proficiency.setText(signed(stats.proficiencyBonus()));
-            dc.setText(Integer.toString(stats.spellSaveDc()));
-            for (Ability ability : Ability.values()) {
-                int score = sheet.score(ability, state.charisma()),
-                        modifier = CharacterSheet.modifier(score);
-                scores.get(ability).setValue(score);
-                modifiers.get(ability).setText(signed(modifier));
-                boolean trained = ability == Ability.CON || ability == Ability.CHA;
-                saves.get(ability)
-                        .setText(
-                                "SAVE "
-                                        + signed(
-                                                modifier + (trained ? stats.proficiencyBonus() : 0))
-                                        + (trained ? " P" : ""));
-                saves.get(ability)
-                        .setToolTipText(
-                                trained
-                                        ? "Sorcerer saving throw proficiency"
-                                        : "Ability modifier; apply extra feat proficiency on your"
-                                              + " sheet");
-            }
-            skillLegend.setText(
-                    "■ PROF ("
-                            + signed(stats.proficiencyBonus())
-                            + ")   ★ EXP ("
-                            + signed(stats.proficiencyBonus() * 2)
-                            + ")");
-            skillLegend.setToolTipText(
-                    "Click a square: untrained → proficient → expertise → untrained. Bonuses"
-                        + " calculate from your ability scores and level.");
-            Set<Skill> granted = session.grantedSkills();
-            skillRows
-                    .values()
-                    .forEach(
-                            row ->
-                                    row.refresh(
-                                            sheet,
-                                            state.charisma(),
-                                            stats.proficiencyBonus(),
-                                            granted,
-                                            session.expertiseSkills()));
+            identity.refresh(state, sheet, stats, restored);
+            bindings.refresh(sheet);
+            vitals.refresh(state, sheet, stats, restored);
+            abilities.refresh(state, sheet, stats, restored);
+            skills.refresh(state, sheet, stats, restored);
             passives.forEach(
                     (skill, value) ->
                             value.setText(
                                     Integer.toString(
                                             10 + session.skillBonus(skill, state.charisma()))));
             choices.refresh();
-            List<String> tools = session.grantedTools();
-            grantedTools.setText(
-                    tools.isEmpty()
-                            ? ""
-                            : "Granted tool proficiencies: " + String.join(", ", tools));
-            grantedTools.setVisible(!tools.isEmpty());
-            int remaining = Math.max(0, state.level() - sheet.field(Field.SPENT_HIT_DICE));
-            hitDice.setText("HIT DICE " + remaining + " / " + state.level() + " (d6)");
-            spendHitDie.setEnabled(
-                    remaining > 0
-                            && session.hitPoints() > 0
-                            && session.hitPoints() < session.maxHitPoints());
+            training.refresh(state, sheet, stats, restored);
             boolean canRest = session.maxHitPoints() == 0 || session.hitPoints() > 0;
             shortRest.setEnabled(canRest);
             longRest.setEnabled(canRest);
@@ -709,12 +267,7 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
                                     + Math.max(0, 2 - state.play().innateUses())
                                     + " / 2");
             innate.putClientProperty("tactileRole", session.innateActive() ? "red" : "blue");
-            save.setEnabled(workspace.canSaveNow() && !name.getText().isBlank());
-            save.setToolTipText(
-                    workspace.isSaveLocked()
-                            ? "Unlock the saved character before committing experiments"
-                            : "Save this sheet and character to the grimoire");
-            discard.setEnabled(workspace.canRestoreSaved());
+            saveControls.refresh(workspace.canSaveNow(), workspace.canRestoreSaved());
             status.setText(editor.saveStatusText());
             refreshFeatures(state);
             AppStyle.applyAppearance(this);
@@ -826,26 +379,6 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         }
     }
 
-    private void spendHitDie() {
-        CharacterState state = editor.snapshot();
-        CharacterSheet sheet = session.sheet();
-        int spent = sheet.field(Field.SPENT_HIT_DICE);
-        if (spent >= state.level() || session.hitPoints() == 0) return;
-        int die = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 7),
-                healing = sheet.hitDieHealing(die);
-        session.setSheet(sheet.withField(Field.SPENT_HIT_DICE, spent + 1));
-        session.setCurrentHitPoints(
-                Math.min(session.maxHitPoints(), session.hitPoints() + healing));
-        workspace
-                .combatPanel()
-                .recordEvent(
-                        "Short Rest Hit Die: d6 ["
-                                + die
-                                + "] + CON = "
-                                + healing
-                                + " HP (limited by maximum HP)");
-    }
-
     private void rollSkill(Skill skill) {
         CharacterState state = editor.snapshot();
         int bonus = session.skillBonus(skill, state.charisma());
@@ -864,7 +397,7 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
     }
 
     private void commit() {
-        if (name.getText().strip().isEmpty()) {
+        if (!identity.hasName()) {
             status.setText("Enter a character name before saving.");
             return;
         }

@@ -87,12 +87,13 @@ final class SkillProficiencyRow extends JPanel {
                                                 : granted ? "proficiency" : "untrained")
                                 + (granted
                                         ? ". Granted by a saved creation choice; edit that choice"
-                                              + " to remove proficiency."
+                                                + " to remove proficiency."
                                         : "");
         marker.getAccessibleContext().setAccessibleDescription(instruction);
         marker.setToolTipText(instruction);
         int value =
-                org.example.domain.character.SkillRules.bonus(sheet.score(skill.ability, charisma), proficiency, tier);
+                org.example.domain.character.SkillRules.bonus(
+                        sheet.score(skill.ability, charisma), proficiency, tier);
         bonus.setText(String.format("%+d", value));
         star.setVisible(tier == 2);
         String ink = tier == 2 ? "badgeText" : "ink";

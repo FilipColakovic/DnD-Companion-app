@@ -39,8 +39,8 @@ public final class MetamagicDetailPanel extends JPanel implements LiveView {
         JTextArea note =
                 AppStyle.text(
                         "Choose targets and resolve rolls at the table. Seeking is used after a"
-                            + " miss; Empowered after rolling damage. The list identifies spell"
-                            + " candidates; conditions in the description still apply.");
+                                + " miss; Empowered after rolling damage. The list identifies spell"
+                                + " candidates; conditions in the description still apply.");
         note.setRows(3);
         header.add(note, BorderLayout.SOUTH);
         add(header, BorderLayout.NORTH);

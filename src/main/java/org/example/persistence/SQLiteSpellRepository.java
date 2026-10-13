@@ -128,7 +128,7 @@ public final class SQLiteSpellRepository implements SpellRepository {
                 if (resource == null) {
                     throw new IOException(
                             "Missing bundled /spells/spells.db; copy application resources into the"
-                                + " classpath");
+                                    + " classpath");
                 }
                 temporary = Files.createTempFile("dnd-spells-", ".db");
                 Files.copy(resource, temporary, StandardCopyOption.REPLACE_EXISTING);

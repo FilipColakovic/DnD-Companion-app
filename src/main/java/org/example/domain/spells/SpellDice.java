@@ -61,15 +61,15 @@ public final class SpellDice {
                     "Roll 1d6 at the end of your turn; 4–6 shifts you to the Ethereal Plane.";
             case "Mirror Image" ->
                     "When hit, roll a d6 per remaining duplicate; any 3+ destroys a duplicate"
-                        + " instead.";
+                            + " instead.";
             case "False Life" -> "Temporary HP: 2d4 + 4, plus 5 per slot level above 1.";
             case "Arcane Vigor" ->
                     "Roll spent Hit Point Dice (d6 for a single-class Sorcerer), then add your"
-                        + " spellcasting modifier.";
+                            + " spellcasting modifier.";
             case "Time Stop" -> "Roll 1d4 + 1 for your extra turns.";
             case "Dispel Magic" ->
                     "Only unresolved higher-level spells require a d20 + spellcasting ability"
-                        + " modifier check.";
+                            + " modifier check.";
             default -> SpellMechanics.damageNote(spell);
         };
     }

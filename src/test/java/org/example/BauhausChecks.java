@@ -132,7 +132,7 @@ public final class BauhausChecks {
                 });
         System.out.println(
                 "Passed: five pages in both themes, open-dialog theme synchronization, shared"
-                    + " navigation, preserved resources, and idempotent window styling.");
+                        + " navigation, preserved resources, and idempotent window styling.");
     }
 
     private static JButton find(Container root, String text) {
