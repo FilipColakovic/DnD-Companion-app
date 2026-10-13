@@ -128,41 +128,35 @@ public final class PlaySession {
         return (int) requiredChoices().stream().filter(choice -> !choice.complete(sheet)).count();
     }
 
+    private CharacterGrants grants() { return CharacterGrants.calculate(sheet, selection.species(), feats.keySet()); }
+
     public Set<CharacterSheet.Skill> grantedSkills() {
-        return CharacterChoices.skills(sheet, selection.species(), feats.keySet());
+        return grants().skills();
     }
 
     public Set<CharacterSheet.Skill> expertiseSkills() {
-        return CharacterChoices.expertise(sheet, selection.species(), feats.keySet());
+        return grants().expertise();
     }
 
     public int skillTier(CharacterSheet.Skill skill) {
-        return Math.max(
-                sheet.tier(skill, grantedSkills()), expertiseSkills().contains(skill) ? 2 : 0);
+        return grants().tier(sheet, skill);
     }
 
     public int skillTierExcluding(CharacterSheet.Skill skill, String excludedFeat) {
         Set<String> active = new HashSet<>(feats.keySet());
         active.remove(excludedFeat);
-        return Math.max(
-                sheet.tier(skill, CharacterChoices.skills(sheet, selection.species(), active)),
-                CharacterChoices.expertise(sheet, selection.species(), active).contains(skill)
-                        ? 2
-                        : 0);
+        return CharacterGrants.calculate(sheet, selection.species(), active).tier(sheet, skill);
     }
 
     public int skillBonus(CharacterSheet.Skill skill, int charisma) {
         int proficiency =
                 SorcererRules.calculate(selection.level(), charisma, selection.subclass())
                         .proficiencyBonus();
-        return CharacterSheet.modifier(sheet.score(skill.ability, charisma))
-                + skillTier(skill) * proficiency;
+        return SkillRules.bonus(sheet.score(skill.ability, charisma), proficiency, skillTier(skill));
     }
 
     public List<String> grantedTools() {
-        Set<String> active = new HashSet<>(feats.keySet());
-        if (selection.species() == Species.HUMAN) active.addAll(sheet.choice("human.feat"));
-        return CharacterChoices.grantedTools(sheet, active);
+        return grants().tools();
     }
 
     public String featConfiguration(String name) {
@@ -402,51 +396,18 @@ public final class PlaySession {
     }
 
     public int metamagicCost(Set<Metamagic> options) {
-        int cost = options.stream().mapToInt(Metamagic::cost).sum();
-        if (selection.level() == 20 && innate) {
-            cost -= options.stream().mapToInt(Metamagic::cost).max().orElse(0);
-        }
-        return cost;
+        return CastingRules.metamagicCost(selection.level(), innate, options);
     }
 
     public String cast(
             SpellCatalog.Spell spell, int slot, boolean speciesFree, Set<Metamagic> options) {
-        if (!selection.selected(spell) || !selection.available(spell)) {
-            return "Choose an available prepared spell or known cantrip.";
-        }
-        if (!options.isEmpty()
-                && (selection.level() < 2 || meta.size() > Metamagic.limit(selection.level()))) {
-            return "Metamagic choices exceed your current level's limit.";
-        }
-        for (Metamagic option : options) {
-            if (!meta.contains(option) || !option.applies(spell)) {
-                return "Metamagic is not selected or is incompatible with this spell.";
-            }
-        }
-        long ordinary = options.stream().filter(option -> !option.combinable()).count();
-        if (ordinary > (selection.level() >= 7 && innate ? 2 : 1)) {
-            return "These Metamagic options cannot be combined right now.";
-        }
-        if (spell.level() == 0 && (slot != 0 || speciesFree)) {
-            return "Cantrips do not spend a slot or a species free cast.";
-        }
-        if (spell.level() > 0) {
-            if (speciesFree) {
-                if (freeCasts(spell) == 0 || slot != spell.level()) {
-                    return "No species free casts remain, or slot level differs from the spell's"
-                               + " base level.";
-                }
-            } else if (slot < spell.level() || slot > 9 || remainingSlots(slot) == 0) {
-                return "No appropriate spell slot remaining.";
-            }
-        }
-        if (options.contains(Metamagic.TWINNED) && slot >= 9) {
-            return "Twinned Spell cannot raise the effective level above 9.";
-        }
-        int cost = metamagicCost(options);
-        if (remainingPoints() < cost) {
-            return "Not enough Sorcery Points.";
-        }
+        Set<Metamagic> requested = Set.copyOf(options);
+        var context = new CastingRules.Context(selection.level(), innate, selection.selected(spell),
+                selection.available(spell), meta, freeCasts(spell),
+                slot >= 1 && slot <= 9 ? remainingSlots(slot) : 0, remainingPoints());
+        String error = CastingRules.validate(spell, slot, speciesFree, requested, context);
+        if (!error.isEmpty()) return error;
+        int cost = metamagicCost(requested);
         points += cost;
         if (spell.level() > 0) {
             if (speciesFree) {

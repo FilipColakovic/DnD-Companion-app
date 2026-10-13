@@ -92,7 +92,7 @@ final class SkillProficiencyRow extends JPanel {
         marker.getAccessibleContext().setAccessibleDescription(instruction);
         marker.setToolTipText(instruction);
         int value =
-                CharacterSheet.modifier(sheet.score(skill.ability, charisma)) + tier * proficiency;
+                org.example.domain.character.SkillRules.bonus(sheet.score(skill.ability, charisma), proficiency, tier);
         bonus.setText(String.format("%+d", value));
         star.setVisible(tier == 2);
         String ink = tier == 2 ? "badgeText" : "ink";
