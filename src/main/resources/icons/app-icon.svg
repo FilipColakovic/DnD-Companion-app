@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Drop Shadow for Neo-Brutalist 3D pop -->
+    <filter id="brutalist-shadow" x="-5%" y="-5%" width="120%" height="120%">
+      <feDropShadow dx="8" dy="8" stdDeviation="0" flood-color="#1a1a1a" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Base Squircle / Rounded Square -->
+  <rect x="24" y="24" width="464" height="464" rx="80" ry="80" fill="#f4ede2" stroke="#1a1a1a" stroke-width="12" filter="url(#brutalist-shadow)" />
+
+  <!-- Tactile Inner Bevel Border (Windows 95 / Retro Chisel Feel) -->
+  <rect x="40" y="40" width="432" height="432" rx="66" ry="66" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9" />
+  <rect x="44" y="44" width="424" height="424" rx="64" ry="64" fill="none" stroke="#d5ccc0" stroke-width="4" />
+
+  <!-- Bauhaus Geometric Accent Blocks -->
+  <!-- Top Right Cadmium Yellow Notch -->
+  <path d="M 330 44 L 430 44 A 64 64 0 0 1 468 140 L 468 180 L 330 44 Z" fill="#f59e0b" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+  <!-- Bottom Left Cobalt Blue Accent Block -->
+  <path d="M 44 340 L 170 468 L 108 468 A 64 64 0 0 1 44 404 Z" fill="#2563eb" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+  <!-- Red Cadmium Indicator Pill / Geometric Badge -->
+  <rect x="80" y="80" width="48" height="48" rx="8" fill="#dc2626" stroke="#1a1a1a" stroke-width="6" />
+
+  <!-- Center Tactile Geometric D20 + Sorcerer Arcane Spark Motif -->
+  <!-- Outer Hexagonal Frame of D20 (centered in the badge) -->
+  <g transform="translate(256, 256)">
+    <!-- Arcane Spark Rays behind d20 in Bauhaus Triangles -->
+    <polygon points="0,-160 -24,-110 24,-110" fill="#f59e0b" stroke="#1a1a1a" stroke-width="6" />
+    <polygon points="160,0 110,-24 110,24" fill="#f59e0b" stroke="#1a1a1a" stroke-width="6" />
+    <polygon points="0,160 -24,110 24,110" fill="#f59e0b" stroke="#1a1a1a" stroke-width="6" />
+    <polygon points="-160,0 -110,-24 -110,24" fill="#f59e0b" stroke="#1a1a1a" stroke-width="6" />
+
+    <!-- D20 Isometric Geometric Faces -->
+    <!-- Center Upward Triangle (Main Face) -->
+    <polygon points="0,-90 -95,74 95,74" fill="#ffffff" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+
+    <!-- Top-Left Facet -->
+    <polygon points="0,-90 -95,74 -130,-16" fill="#eae2d5" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+    <!-- Top-Right Facet -->
+    <polygon points="0,-90 95,74 130,-16" fill="#fbbf24" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+
+    <!-- Top Apex Facet -->
+    <polygon points="0,-90 -130,-16 0,-130" fill="#2563eb" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+    <polygon points="0,-90 130,-16 0,-130" fill="#3b82f6" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+
+    <!-- Bottom Left Facet -->
+    <polygon points="-95,74 0,130 -130,-16" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+    <polygon points="-95,74 0,130 0,74" fill="#dc2626" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+
+    <!-- Bottom Right Facet -->
+    <polygon points="95,74 0,130 130,-16" fill="#f59e0b" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+    <polygon points="95,74 0,130 0,74" fill="#b45309" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" />
+
+    <!-- Center Face Arcane Glyph / Sorcerer Sigil Symbol -->
+    <!-- Sorcerer Flame / Psionic Eye Geometric Inset -->
+    <path d="M 0 -50 C 26 -20 40 10 32 40 C 24 64 0 66 0 66 C 0 66 -24 64 -32 40 C -40 10 -26 -20 0 -50 Z" fill="#1a1a1a" />
+    <!-- Inner Core Spark in Cadmium Yellow -->
+    <circle cx="0" cy="18" r="14" fill="#f59e0b" />
+    <circle cx="0" cy="18" r="6" fill="#ffffff" />
+  </g>
+</svg>
