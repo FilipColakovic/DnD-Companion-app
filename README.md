@@ -32,23 +32,24 @@ The dashboard fits the desktop with independently scrollable panels. Every unloc
 slot level is available; high levels do not resize the whole window unexpectedly.
 The **Race / species** selector includes all ten PHB 2024 species. Elf, Gnome,
 and Tiefling options include their spell-bearing lineages or legacies. Species spells
-unlock at the appropriate character level, appear automatically in both spell windows,
-and do not consume Sorcerer selection limits. The calculator includes these additional
+unlock at the appropriate character level, appear automatically in Spell Library and Cast & Combat,
+and do not consume Sorcerer selection limits. The sheet includes these additional
 cantrips and prepared spells; species grants do not add spell slots or Sorcery Points.
 Spell-list labels identify species grants and their free casts per Long Rest.
-Species spellcasting assumes Charisma. High Elf currently uses its starting
+Species spellcasting uses the ability confirmed on Character; Charisma remains the default until that choice is completed. High Elf currently uses its starting
 Prestidigitation cantrip; replacing that cantrip after a Long Rest is not tracked.
 Human spells gained through an optional Origin feat are outside this species selector.
 Sources: [2024 species rules](https://www.dndbeyond.com/sources/dnd/br-2024/character-origins)
 and [2024 Aasimar](https://roll20.net/compendium/dnd5e/Races%3AAasimar?expansion=32231).
 `GrimoirePanel` renders the dashboard; `CharacterSheetPanel` provides the sheet editor.
-The reusable standalone `SorcererPanel` retains its existing public editing APIs.
+The nonvisual `CharacterController` owns editing, snapshots and protected checkpoints.
+The retired standalone calculator and table spellbook screens are consolidated into the dashboard.
 `SorcererRules.calculate(level, charisma)` returns
 an immutable Aberrant Sorcery snapshot. The overload `calculate(level, charisma, subclass)`
 supports each of the four subclasses and can also be reused by another UI.
 
 Use the sidebar's **Cast & Combat**, **Metamagic**,
-**Spell Library**, and **Character** pages to move between tools. Character name,
+**Feats**, **Spell Library**, and **Character** pages to move between tools. Character name,
 level, species and subclass are real saved inputs. The top header is removed;
 resources appear in the sidebar, with a separator above navigation. The combat
 spell list fills the available height. Rest and Innate Sorcery controls are in Character.
@@ -77,27 +78,9 @@ it. With no selections in a group, **All** is active. **All** also clears that g
 Spells are ordered by level and name; the sort dropdown and Reset button are removed. Compatible chosen Metamagic appears as
 inspector chips with eligibility tooltips. Resource updates reuse cards and preserve
 the inspector and its scroll position. The list and inspector stack in narrow windows.
-The library lists all 150 PHB 2024
-Sorcerer spells (including 20 cantrips), plus the selected
-subclass's additional spells. Search by name, filter by spell level, or show only
-available spells / your selected spells. Check the Choose column to select spells;
-the counters track class cantrips and prepared level 1+ spells separately.
-Subclass spells unlock automatically and do not consume class selection limits.
-The spell window follows changes to level and subclass in the main window.
-The **My spells** button at the top right opens a separate window with your
-known cantrips and prepared spells, including automatic subclass grants. It updates
-live as choices, level, or subclass change. Search, spell-level filters, and spell
-detail clicks work there too. Dormant choices show that a higher level is required.
-Checkbox changes in the full list update individual cells without resetting the
-scroll position, row selection, or wrapped row heights.
-Use **Prepared only** in Spell Library to review this list in the main window.
-Each spell has a short summary. Rows grow to fit wrapped text and adjust when the
-window or column is resized. Click its name (or select a row and press Enter)
-to open another app window with the spell's school, casting time, range, components,
-duration, Concentration/Ritual flags, full effects, and scaling. Summoning spells
-also include the relevant spirit stat block. Clicking the checkbox only changes
-your choices. Spell data is bundled locally; no browser or runtime internet access
-is required. Sources and licensing are in [SPELL_DATA_LICENSE.md](SPELL_DATA_LICENSE.md).
+The library includes the PHB Sorcerer list and additional spells from the current subclass or species. Counters track manually learned cantrips and levelled spells separately from automatic grants. Changing level preserves dormant choices, which remain inspectable and removable.
+
+**Full details** opens a sidebar-free window with casting specifications, the complete description, scaling and any supplied spirit stat block. Spell data is local; reading it needs no runtime internet access. Sources and licensing are in [SPELL_DATA_LICENSE.md](SPELL_DATA_LICENSE.md).
 
 Spell names, levels, class-list membership, descriptions, casting details, scaling,
 flags and reference URLs are bundled in `src/main/resources/spells/spells.db`.
@@ -312,21 +295,9 @@ Sources: [2024 Sorcerer class](https://www.dndbeyond.com/classes/2190884-sorcere
 [2024 Draconic Sorcery](https://roll20.net/compendium/dnd5e/Subclasses%3ADraconic%20Sorcery?expansion=32231),
 [PHB 2024 Sorcerer spell list](https://roll20.net/compendium/dnd5e/Classes%3ASorcerer?expansion=32231).
 
-Code is organized under `src/main/java/org/example/`:
+Code is organized into application controllers, domain rules, persistence and reusable UI components. See [ARCHITECTURE.md](ARCHITECTURE.md) for responsibilities, public compatibility APIs, listener lifecycles and deferred automation.
 
-- `Main.java`: application launcher; its run configuration stays `org.example.Main`.
-- `domain/character`: Sorcerer rules, calculated stats, resources and immutable sheet inputs.
-- `persistence`: character SQLite storage and the separate read-only spell repository.
-- `domain/spells`: repository interface, spell catalog APIs, rules and character spell choices.
-- `src/main/resources/spells/spells.db`: bundled spell metadata and details.
-- `ui/character`: sheet editor, Feats filters/cards/inspector, Metamagic and standalone calculator.
-- `ui/GrimoirePanel.java`: sidebar, navigation, character profile and checkpoints.
-- `ui/spells`: spellbook, filtering/table model, wrapping row renderer, and detail window.
-- `ui/spells/CastingPanel.java`: casting selection, contextual dice, spell annotations and combat log.
-- `ui/common`: shared styling and icons.
-
-Regression checks mirror the UI packages under `src/test/java/org/example/`.
-The offline spell-data builder in `scripts/` writes the bundled SQLite catalog.
+The application entry point remains `org.example.Main`. Character saves remain in `data/character.db`; the bundled read-only spell catalog remains separate. The offline spell-data builder lives in `scripts/`.
 
 To compile and run in PowerShell with JDK 25 on PATH:
 
@@ -343,41 +314,18 @@ java --enable-native-access=ALL-UNNAMED -cp 'target/classes;target/dependency/*'
 The database uses the [Xerial SQLite JDBC driver](https://github.com/xerial/sqlite-jdbc).
 No database server is required. Downloading the driver is a one-time setup step.
 
-Run the regression checks (the persistence checks use the same driver):
+Run all regression checks with one command (JDK 25 on PATH or in JAVA_HOME):
 
 ```powershell
-New-Item -ItemType Directory -Force target/test-classes | Out-Null
-$tests = @(Get-ChildItem -Recurse src/test/java -Filter *.java | ForEach-Object FullName)
-javac -encoding UTF-8 -cp target/classes -d target/test-classes $tests
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.character.SorcererChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.spells.SpellBookChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.spells.SpeciesChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.character.PlayChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.domain.spells.DamageDiceChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.domain.spells.SpellRulesChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.GrimoireChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.spells.DiceTrayChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.spells.SpellLibraryChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.character.MetamagicCardChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.character.FeatsChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.ui.character.CharacterSheetChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.BauhausChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=true' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.persistence.CharacterStoreChecks
-java --enable-native-access=ALL-UNNAMED -cp 'target/classes;target/test-classes;target/dependency/*' org.example.persistence.SpellRepositoryChecks
-java --enable-native-access=ALL-UNNAMED '-Djava.awt.headless=false' -cp 'target/classes;target/test-classes;target/dependency/*' org.example.WindowPersistenceChecks
+.\scripts\Verify.ps1
 ```
 
-Checks cover all levels, ability modifiers, boundary validation, slider/button updates,
-spell-list counts, subclass grants, selection limits, retained choices, search, filtering,
-detail clicks, data completeness, readable subclass menu selections, wrapped descriptions
-at multiple column widths and font sizes, and live level/subclass synchronization from the main window.
-They also render calculator and spellbook previews in `target/` for visual inspection.
-Run `SorcererChecks` with `'-Djava.awt.headless=false'` to also verify automatic frame growth.
-Run `GrimoireChecks` with `'-Djava.awt.headless=false'` to verify real dialogs and the
-compact dashboard layout at level 20 with larger text. It renders dark, light and
-compact dashboard previews in `target/`.
-Database checks use disposable files under `target/`. They verify save/reopen, replacing
-spell choices, preserving dormant choices, atomic rollback after a write failure,
-UI restoration, and the real main-window close handler.
-They also verify checkpoint creation, protecting experiments, restoration in open spell
-windows, locked exit/reopen, and resuming normal saves after unlocking.
+Or choose the JDK explicitly:
+
+```powershell
+.\scripts\Verify.ps1 -JavaHome 'C:\Users\filip\.jdks\openjdk-25'
+```
+
+Use `-Headless` to run checks that do not need desktop verification; skipped window checks are listed explicitly. Full desktop verification is the default. The runner compiles current production and test sources, copies resources, resolves SQLite JDBC, runs checks in separate JVMs, reports failures and exits nonzero when a check fails. It writes logs to `target/verification/` and uses disposable databases instead of your saved character.
+
+The checks cover character rules, choices and grants, HP, casting resource atomicity, dice, Metamagic, Feats and backgrounds, spell learning/filtering, protected saves and checkpoint restoration. They also check persistent inspector widgets, sheet drafts, caret/scroll preservation, window chrome and normal/narrow previews in both themes at text sizes 12–18. The full rendering matrix is in `target/verification/components/`.

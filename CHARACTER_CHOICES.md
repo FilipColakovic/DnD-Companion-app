@@ -38,7 +38,7 @@ Rule references reviewed for this implementation:
 - [PHB Wizard spell list](https://app.roll20.net/compendium/dnd5e/Classes:Wizard?expansion=32231), [Cleric spell list](https://app.roll20.net/compendium/dnd5e/Classes:Cleric?expansion=32231), [Druid spell list](https://app.roll20.net/compendium/dnd5e/Classes:Druid?expansion=32231)
 - [Magic Initiate and Skilled](https://www.dndbeyond.com/sources/dnd/br-2024/feats), [PHB crafting and Crafter](https://www.dndbeyond.com/posts/1788-lets-explore-the-crafting-rules-in-the-2024), [tools and instruments](https://www.dndbeyond.com/sources/dnd/br-2024/equipment)
 
-Verification: `org.example.ui.character.BackgroundChecks` and `org.example.ui.character.CharacterChoicesChecks`, plus the existing character, Feats, species, combat, dice, spell-library and SQLite checks. Checks use disposable state and never edit the real character database.
+Verification: run `scripts/Verify.ps1` for Background, Character choices, sheet, Feats, species, combat, dice, spell-library and SQLite checks. Checks use disposable state and never edit the real character database.
 
 Backgrounds are selected in **Feats → Backgrounds**. Their two fixed skills and their Origin feat are derived grants; changing or removing the background deactivates only that source. Free-form legacy background notes are preserved until the user explicitly selects a catalog background. Structured selections make the Character background name read-only, with a **Choose background** link back to the catalog.
 
