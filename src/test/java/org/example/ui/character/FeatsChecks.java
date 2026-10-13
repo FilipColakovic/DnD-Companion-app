@@ -113,7 +113,7 @@ public final class FeatsChecks {
                         check(
                                 dashboard.snapshot().equals(before),
                                 "Milestone preview changes no saved inputs or choices");
-                        find(dashboard.characterPanel(), JSlider.class, c -> true).setValue(4);
+                        dashboard.characterController().setLevel(4);
                         accessible(panel, JButton.class, "Equip War Caster").doClick(0);
                         check(
                                 dashboard.playSession().feats().containsKey("War Caster"),
@@ -344,7 +344,7 @@ public final class FeatsChecks {
                                 "Narrow layout stacks library and inspector");
                         layout(frame);
                         preview(dashboard, "target/feats-narrow-18.png");
-                        find(dashboard.characterPanel(), JSlider.class, c -> true).setValue(1);
+                        dashboard.characterController().setLevel(1);
                         panel.inspect("War Caster");
                         check(
                                 dashboard.playSession().feats().containsKey("War Caster"),

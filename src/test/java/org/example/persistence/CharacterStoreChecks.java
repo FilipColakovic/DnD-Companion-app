@@ -7,8 +7,9 @@ import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.domain.spells.SpellCatalog;
 import org.example.domain.spells.SpellSelection;
-import org.example.ui.character.SorcererPanel;
-import org.example.ui.spells.SpellBookPanel;
+import org.example.application.CharacterController;
+import org.example.ui.spells.SpellLibraryPanel;
+
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -176,11 +177,11 @@ public final class CharacterStoreChecks {
 
             SwingUtilities.invokeAndWait(
                     () -> {
-                        SorcererPanel panel = new SorcererPanel(first);
+                        CharacterController panel = new CharacterController(first);
                         check(
                                 panel.snapshot().equals(first),
                                 "Main window restores inputs and manual choices");
-                        SpellBookPanel spellbook = panel.createSpellBook();
+                        SpellLibraryPanel spellbook = new SpellLibraryPanel(panel.playSession(), panel::snapshot);
                         check(
                                 panel.snapshot().chosenSpells().equals(first.chosenSpells()),
                                 "Opening the spellbook does not add automatic grants to the save");
@@ -189,6 +190,7 @@ public final class CharacterStoreChecks {
                                 panel.snapshot().chosenSpells().equals(first.chosenSpells()),
                                 "Subclass changes preserve manual choices");
                         spellbook.dispose();
+                        panel.close();
                     });
             CharacterState empty =
                     new CharacterState(20, 1, SorcererRules.Subclass.ABERRANT, Set.of());

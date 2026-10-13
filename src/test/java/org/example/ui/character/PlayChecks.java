@@ -207,14 +207,15 @@ public final class PlayChecks {
                 "New saves omit removed turn state");
         SwingUtilities.invokeAndWait(
                 () -> {
-                    SorcererPanel panel =
-                            new SorcererPanel(
+                    org.example.ui.GrimoirePanel workspace =
+                            new org.example.ui.GrimoirePanel(
                                     new CharacterState(
                                             5,
                                             17,
                                             SorcererRules.Subclass.WILD_MAGIC,
                                             Set.of("Fireball"),
                                             Species.HUMAN));
+                    var panel = workspace.characterController();
                     panel.playSession().choose(Metamagic.QUICKENED, true);
                     MetamagicDetailPanel detail =
                             new MetamagicDetailPanel(Metamagic.QUICKENED, panel.playSession());
@@ -229,16 +230,16 @@ public final class PlayChecks {
                     panel.playSession().appearance(true, 18);
                     check(
                             panel.snapshot().play().dark()
-                                    && hasText(panel, "Experimenting · save protected"),
+                                    && panel.saveStatusText().equals("Experimenting · save protected"),
                             "Save status includes resource and theme experiments");
-                    preview(panel, "target/play-dark-preview.png", 1000);
-                    panel.restore(saved);
+                    preview(workspace, "target/play-dark-preview.png", 1000);
+                    workspace.restore(saved);
                     check(
                             panel.snapshot().equals(saved)
                                     && AppStyle.isDark() == saved.play().dark(),
                             "Restore includes resources, Metamagic and appearance");
                     panel.playSession().appearance(false, 14);
-                    preview(panel, "target/play-light-preview.png", 920);
+                    preview(workspace, "target/play-light-preview.png", 920);
                     CastingPanel casting = new CastingPanel(panel.playSession(), () -> 17);
                     AppStyle.applyAppearance(casting);
                     preview(casting, "target/casting-preview.png", 960);
@@ -246,14 +247,14 @@ public final class PlayChecks {
                     MetamagicPanel picker = new MetamagicPanel(panel.playSession());
                     preview(picker, "target/metamagic-preview.png", 960);
                     picker.dispose();
-                    panel.restore(
+                    workspace.restore(
                             new CharacterState(
                                     20,
                                     17,
                                     SorcererRules.Subclass.ABERRANT,
                                     Set.of(),
                                     Species.HUMAN));
-                    preview(panel, "target/play-level20-preview.png", 1000);
+                    preview(workspace, "target/play-level20-preview.png", 1000);
                 });
         System.out.println(
                 "Passed: resource/rest/casting rules, Metamagic eligibility and limits, state"

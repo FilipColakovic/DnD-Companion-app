@@ -5,7 +5,7 @@ import org.example.domain.character.PlaySession;
 import org.example.ui.character.CharacterSheetPanel;
 import org.example.ui.character.FeatsPanel;
 import org.example.ui.character.MetamagicPanel;
-import org.example.ui.character.SorcererPanel;
+import org.example.application.CharacterController;
 import org.example.ui.common.AppStyle;
 import org.example.ui.common.ArcaneIcon;
 import org.example.ui.common.LiveView;
@@ -45,7 +45,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
             FEATS = "Feats",
             LIBRARY = "Spell Library",
             CHARACTER = "Character";
-    private final SorcererPanel character;
+    private final CharacterController character;
     private final CastingPanel combat;
     private final SpellLibraryPanel library;
     private final MetamagicPanel metamagic;
@@ -70,8 +70,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
 
     public GrimoirePanel(CharacterState state) {
         super(new BorderLayout());
-        character = new SorcererPanel(state);
-        character.setEmbedded(true);
+        character = new CharacterController(state);
         combat = new CastingPanel(playSession(), () -> snapshot().charisma());
         combat.setSpellbookAction(() -> showPage(LIBRARY));
         library = new SpellLibraryPanel(playSession(), this::snapshot);
@@ -233,6 +232,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         updating = true;
         try {
             CharacterState state = snapshot();
+            AppStyle.appearance(state.play().dark(), state.play().textSize());
             int remaining = playSession().pendingDecisions();
             pendingDecisions.setVisible(remaining > 0);
             pendingDecisions.setToolTipText(
@@ -291,9 +291,13 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         sheetEditor.refresh();
     }
 
-    public SorcererPanel characterPanel() {
+    public CharacterController characterPanel() {
         return character;
     }
+
+    public CharacterController characterController() { return character; }
+
+    public SpellLibraryPanel libraryPanel() { return library; }
 
     public CastingPanel combatPanel() {
         return combat;
@@ -354,6 +358,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         metamagic.dispose();
         feats.dispose();
         sheetEditor.dispose();
+        character.close();
     }
 
     private static void preferenceRow(JPanel panel, JComponent component) {

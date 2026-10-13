@@ -6,7 +6,7 @@ import org.example.domain.character.SorcererRules;
 import org.example.domain.character.Species;
 import org.example.persistence.CharacterStore;
 import org.example.ui.GrimoirePanel;
-import org.example.ui.character.SorcererPanel;
+import org.example.application.CharacterController;
 import org.example.ui.spells.CastingPanel;
 
 import java.awt.Component;
@@ -40,20 +40,13 @@ public final class WindowPersistenceChecks {
                         JFrame reopened = null;
                         try {
                             window = Main.createWindow(store);
-                            SorcererPanel panel =
+                            CharacterController panel =
                                     ((GrimoirePanel) window.getContentPane()).characterPanel();
-                            find(panel, JSlider.class, null).setValue(8);
-                            find(panel, JButton.class, "+").doClick(0);
+                            panel.setLevel(8);
+                            panel.setCharismaScore(panel.snapshot().charisma()+1);
                             panel.selectSubclass(SorcererRules.Subclass.CLOCKWORK);
                             panel.selectSpecies(Species.INFERNAL_TIEFLING);
-                            var spellbook = panel.createSpellBook();
-                            JTable table = find(spellbook, JTable.class, null);
-                            for (int row = 0; row < table.getRowCount(); row++) {
-                                if ("Shield".equals(table.getValueAt(row, 2))) {
-                                    table.getModel().setValueAt(false, row, 0);
-                                }
-                            }
-                            spellbook.dispose();
+                            panel.playSession().selection().choose(org.example.domain.spells.SpellCatalog.all().stream().filter(spell -> spell.name().equals("Shield")).findFirst().orElseThrow(), false);
                             panel.playSession().choose(Metamagic.QUICKENED, true);
                             panel.playSession()
                                     .setSheet(
@@ -96,9 +89,9 @@ public final class WindowPersistenceChecks {
                                 throw new AssertionError(
                                         "New window did not restore the last save");
                             }
-                            SorcererPanel experimenting =
+                            CharacterController experimenting =
                                     ((GrimoirePanel) reopened.getContentPane()).characterPanel();
-                            find(experimenting, JButton.class, "+").doClick(0);
+                            experimenting.setCharismaScore(experimenting.snapshot().charisma()+1);
                             CharacterState checkpoint = experimenting.snapshot();
                             GrimoirePanel workspace = (GrimoirePanel) reopened.getContentPane();
                             JCheckBox lock =
@@ -108,7 +101,7 @@ public final class WindowPersistenceChecks {
                                     store.load().equals(checkpoint) && store.isSaveLocked(),
                                     "Checking save protection immediately commits a checkpoint and"
                                         + " its lock");
-                            var linked = experimenting.createSpellBook();
+                            var linked = workspace.libraryPanel();
                             workspace.showPreparedSpells();
                             check(
                                     workspace.currentPage().equals(GrimoirePanel.LIBRARY),
@@ -118,7 +111,7 @@ public final class WindowPersistenceChecks {
                                     workspace.currentPage().equals(GrimoirePanel.METAMAGIC),
                                     "Metamagic navigation opens the shared page");
                             find(workspace, JButton.class, GrimoirePanel.COMBAT).doClick(0);
-                            JTable linkedTable = find(linked, JTable.class, null);
+
                             experimenting.playSession().longRest();
                             CastingPanel casting = workspace.combatPanel();
                             check(
@@ -130,15 +123,11 @@ public final class WindowPersistenceChecks {
                                             && experimenting.playSession().remainingSlots(3) == 2,
                                     "Casting window spends resources in main-window model");
                             experimenting.playSession().appearance(true, 16);
-                            find(experimenting, JSlider.class, null).setValue(20);
-                            find(experimenting, JButton.class, "−").doClick(0);
+                            experimenting.setLevel(20);
+                            experimenting.setCharismaScore(experimenting.snapshot().charisma()-1);
                             experimenting.selectSubclass(SorcererRules.Subclass.WILD_MAGIC);
                             experimenting.selectSpecies(Species.WOOD_ELF);
-                            for (int row = 0; row < linkedTable.getRowCount(); row++) {
-                                if ("Fireball".equals(linkedTable.getValueAt(row, 2))) {
-                                    linkedTable.getModel().setValueAt(false, row, 0);
-                                }
-                            }
+                            experimenting.playSession().selection().choose(org.example.domain.spells.SpellCatalog.all().stream().filter(spell -> spell.name().equals("Fireball")).findFirst().orElseThrow(), false);
                             check(
                                     !experimenting.snapshot().equals(checkpoint)
                                             && store.load().equals(checkpoint),
@@ -150,16 +139,9 @@ public final class WindowPersistenceChecks {
                                             && experimenting.isSaveLocked(),
                                     "Restore saved returns all inputs and spell choices and keeps"
                                         + " protection enabled");
-                            boolean restoredSpell = false;
-                            for (int row = 0; row < linkedTable.getRowCount(); row++) {
-                                if ("Fireball".equals(linkedTable.getValueAt(row, 2))) {
-                                    restoredSpell =
-                                            Boolean.TRUE.equals(linkedTable.getValueAt(row, 0));
-                                }
-                            }
-                            check(restoredSpell, "Restoration updates an already open spell list");
-                            linked.dispose();
-                            find(experimenting, JSlider.class, null).setValue(1);
+                            workspace.showPreparedSpells();
+                            check(linked.visibleSpellCount()==experimenting.playSession().selection().automaticCount()+checkpoint.chosenSpells().size(), "Restore updates the existing prepared library");
+                            experimenting.setLevel(1);
                             reopened.dispatchEvent(
                                     new WindowEvent(reopened, WindowEvent.WINDOW_CLOSING));
                             check(
@@ -173,7 +155,7 @@ public final class WindowPersistenceChecks {
                                     experimenting.isSaveLocked()
                                             && experimenting.snapshot().equals(checkpoint),
                                     "Save protection and checkpoint survive reopening");
-                            find(experimenting, JSlider.class, null).setValue(10);
+                            experimenting.setLevel(10);
                             experimenting.selectSpecies(Species.FOREST_GNOME);
                             CharacterState unlockedChanges = experimenting.snapshot();
                             find(

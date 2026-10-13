@@ -65,7 +65,7 @@ import javax.swing.text.JTextComponent;
 /** Live single-character sheet based on the supplied three-column Bauhaus editor. */
 public final class CharacterSheetPanel extends JPanel implements LiveView {
     private final GrimoirePanel workspace;
-    private final SorcererPanel editor;
+    private final org.example.application.CharacterController editor;
     private final PlaySession session;
     private final CharacterChoicesPanel choices;
     private final JTextField name = new JTextField(20),

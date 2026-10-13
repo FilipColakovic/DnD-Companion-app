@@ -17,6 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /** Shared live resource model. Failed casts validate fully before spending anything. */
 public final class PlaySession {
     private final SpellSelection selection;
+    private final Runnable selectionListener = this::holdZeroHp;
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
     private final int[] slots = new int[9];
     private int points, innateUses, textSize = 14;
@@ -236,8 +237,10 @@ public final class PlaySession {
 
     public PlaySession(SpellSelection selection) {
         this.selection = selection;
-        selection.addChangeListener(this::holdZeroHp);
+        selection.addChangeListener(selectionListener);
     }
+
+    public void dispose() { selection.removeChangeListener(selectionListener); listeners.clear(); }
 
     public void addListener(Runnable listener) {
         listeners.add(listener);

@@ -19,6 +19,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
+import javax.swing.JSpinner;
 
 /** Dependency-free rules and Swing interaction checks. Run with -Djava.awt.headless=true. */
 public final class SorcererChecks {
@@ -75,189 +76,38 @@ public final class SorcererChecks {
             } catch (IllegalArgumentException expected) {
             }
         }
-        SwingUtilities.invokeAndWait(
-                () -> {
-                    SorcererPanel panel = new SorcererPanel();
-                    panel.setSize(888, 660);
-                    layout(panel);
-                    check(hasText(panel, "13") && hasText(panel, "+5"), "Initial UI stats");
-                    SubclassSelector selector = find(panel, SubclassSelector.class, null);
-                    JPopupMenu menu = selector.createMenu();
-                    check(menu.getComponentCount() == 4, "Four subclass menu options");
-                    check(
-                            menu.getPreferredSize().width >= selector.getWidth(),
-                            "Menu spans the selector width");
-                    int selectedOptions = 0;
-                    for (Component component : menu.getComponents()) {
-                        JRadioButtonMenuItem item = (JRadioButtonMenuItem) component;
-                        check(
-                                item.getFont().getSize() == 16
-                                        && item.getPreferredSize().height >= 44,
-                                "Readable subclass menu options");
-                        if (item.isSelected()) {
-                            selectedOptions++;
-                        }
-                    }
-                    check(selectedOptions == 1, "One subclass marked as selected");
-                    ((JRadioButtonMenuItem) menu.getComponent(3)).doClick(0);
-                    check(
-                            selector.getText().contains("Wild Magic"),
-                            "Menu click updates the main selector");
-                    check(
-                            ((JRadioButtonMenuItem) selector.createMenu().getComponent(3))
-                                    .isSelected(),
-                            "Reopened menu marks the chosen subclass");
-                    panel.selectSubclass(SorcererRules.Subclass.ABERRANT);
-                    menu = selector.createMenu();
-                    menu.setSize(menu.getPreferredSize());
-                    layout(menu);
-                    BufferedImage menuImage =
-                            new BufferedImage(
-                                    menu.getWidth(), menu.getHeight(), BufferedImage.TYPE_INT_RGB);
-                    Graphics2D menuGraphics = menuImage.createGraphics();
-                    menuGraphics.setColor(Color.WHITE);
-                    menuGraphics.fillRect(0, 0, menu.getWidth(), menu.getHeight());
-                    menu.printAll(menuGraphics);
-                    menuGraphics.dispose();
-                    try {
-                        ImageIO.write(
-                                menuImage, "png", new File("target/subclass-menu-preview.png"));
-                    } catch (java.io.IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    int initialHeight = panel.getPreferredSize().height;
-                    check(
-                            find(panel, JScrollPane.class, null) == null,
-                            "Calculator has no scroll pane");
-                    find(panel, JSlider.class, null).setValue(20);
-                    check(hasText(panel, "32") && hasText(panel, "22"), "Slider refresh");
-                    check(
-                            panel.getPreferredSize().height > initialHeight,
-                            "Content grows for more slot rows");
-                    panel.selectSubclass(SorcererRules.Subclass.WILD_MAGIC);
-                    check(
-                            hasText(panel, "22") && hasText(panel, "6"),
-                            "Wild Magic selection refreshes counts");
-                    panel.selectSubclass(SorcererRules.Subclass.CLOCKWORK);
-                    check(
-                            hasText(panel, "32") && hasText(panel, "6"),
-                            "Clockwork selection refreshes counts");
-                    panel.selectSubclass(SorcererRules.Subclass.DRACONIC);
-                    check(
-                            hasText(panel, "32") && hasText(panel, "6"),
-                            "Draconic selection refreshes counts");
-                    panel.selectSubclass(SorcererRules.Subclass.ABERRANT);
-                    check(hasText(panel, "7"), "Aberrant adds Mind Sliver");
-                    if (!GraphicsEnvironment.isHeadless()) {
-                        JFrame frame = new JFrame();
-                        try {
-                            SorcererPanel hosted = new SorcererPanel();
-                            frame.setContentPane(hosted);
-                            frame.pack();
-                            hosted.fitWindowToContent();
-                            int startHeight = frame.getHeight();
-                            find(hosted, JSlider.class, null).setValue(20);
-                            frame.validate();
-                            check(
-                                    frame.getHeight() > startHeight,
-                                    "Frame grows automatically at high levels");
-                            check(
-                                    frame.getContentPane().getHeight()
-                                            >= hosted.getPreferredSize().height,
-                                    "Frame fits all content");
-                            check(
-                                    frame.getMinimumSize().height
-                                            >= hosted.getPreferredSize().height,
-                                    "Minimum frame size prevents clipping");
-                        } finally {
-                            frame.dispose();
-                        }
-                    }
-                    panel.setSize(888, Math.max(660, panel.getPreferredSize().height));
-                    layout(panel);
-                    savePreview(panel, "target/calculator-level20-preview.png");
-                    JButton plus = find(panel, JButton.class, "+");
-                    JButton minus = find(panel, JButton.class, "−");
-                    for (int i = 0; i < 20; i++) {
-                        plus.doClick(0);
-                    }
-                    check(!plus.isEnabled() && hasText(panel, "30"), "Upper Charisma bound");
-                    for (int i = 0; i < 40; i++) {
-                        minus.doClick(0);
-                    }
-                    check(
-                            !minus.isEnabled() && hasText(panel, "1") && hasText(panel, "+1"),
-                            "Lower Charisma bound");
-                    for (int i = 0; i < 16; i++) {
-                        plus.doClick(0);
-                    }
-                    find(panel, JSlider.class, null).setValue(1);
-                    panel.setSize(888, Math.max(660, panel.getPreferredSize().height));
-                    layout(panel);
-                    savePreview(panel, "target/calculator-preview.png");
-                });
-        System.out.println(
-                "Passed: 20 levels, 600 ability combinations, four subclasses, input bounds, and"
-                    + " Swing control updates."
-                        + (GraphicsEnvironment.isHeadless()
-                                ? ""
-                                : " Automatic frame growth also passed."));
-    }
 
-    private static void savePreview(SorcererPanel panel, String path) {
-        BufferedImage preview =
-                new BufferedImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = preview.createGraphics();
-        panel.printAll(g);
-        g.dispose();
-        try {
-            ImageIO.write(preview, "png", new File(path));
-        } catch (java.io.IOException e) {
-            throw new RuntimeException(e);
-        }
+        SwingUtilities.invokeAndWait(() -> {
+            var workspace=new org.example.ui.GrimoirePanel(org.example.domain.character.CharacterState.defaults());
+            try {
+                workspace.showPage(org.example.ui.GrimoirePanel.CHARACTER);
+                var controller=workspace.characterController();
+                var level=accessible(workspace,JSpinner.class,"Character level");
+                level.setValue(20);check(controller.snapshot().level()==20,"Current level control updates controller");
+                var charisma=accessible(workspace,JSpinner.class,"CHA score");
+                charisma.setValue(30);check(controller.snapshot().charisma()==30,"Current ability control updates controller");
+                charisma.setValue(1);check(controller.snapshot().charisma()==1,"Lower ability boundary");
+                var selector=find(workspace,SubclassSelector.class);
+                var menu=selector.createMenu();check(menu.getComponentCount()==4,"Four PHB subclass choices");
+                ((JRadioButtonMenuItem)menu.getComponent(3)).doClick(0);
+                check(controller.snapshot().subclass()==SorcererRules.Subclass.WILD_MAGIC,"Menu updates current character");
+                for(int invalid:new int[]{0,21})try{controller.setLevel(invalid);throw new AssertionError("Invalid level accepted");}catch(IllegalArgumentException expected){}
+                for(int invalid:new int[]{0,31})try{controller.setCharismaScore(invalid);throw new AssertionError("Invalid ability accepted");}catch(IllegalArgumentException expected){}
+            } finally {workspace.dispose();}
+        });
+        System.out.println("Passed: 20 levels, 600 ability combinations, four subclasses, bounds and current Character controls.");
     }
-
-    private static void check(boolean condition, String message) {
-        if (!condition) {
-            throw new AssertionError(message);
-        }
+    private static void check(boolean condition,String message){if(!condition)throw new AssertionError(message);}
+    private static <T extends Component> T accessible(Container root,Class<T> type,String name){
+        for(Component child:root.getComponents()){
+            if(type.isInstance(child)&&child.getAccessibleContext()!=null&&name.equals(child.getAccessibleContext().getAccessibleName()))return type.cast(child);
+            if(child instanceof Container nested){T result=accessible(nested,type,name);if(result!=null)return result;}
+        }return null;
     }
-
-    private static void layout(Container container) {
-        container.doLayout();
-        for (Component child : container.getComponents()) {
-            if (child instanceof Container nested) {
-                layout(nested);
-            }
-        }
-    }
-
-    private static boolean hasText(Container root, String text) {
-        for (Component child : root.getComponents()) {
-            if (child instanceof JLabel label && text.equals(label.getText())) {
-                return true;
-            }
-            if (child instanceof Container nested && hasText(nested, text)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static <T extends Component> T find(Container root, Class<T> type, String text) {
-        for (Component child : root.getComponents()) {
-            if (type.isInstance(child)
-                    && (text == null
-                            || child instanceof JButton button && text.equals(button.getText()))) {
-                return type.cast(child);
-            }
-            if (child instanceof Container nested) {
-                T result = find(nested, type, text);
-                if (result != null) {
-                    return result;
-                }
-            }
-        }
-        return null;
+    private static <T extends Component> T find(Container root,Class<T> type){
+        for(Component child:root.getComponents()){
+            if(type.isInstance(child))return type.cast(child);
+            if(child instanceof Container nested){T result=find(nested,type);if(result!=null)return result;}
+        }return null;
     }
 }

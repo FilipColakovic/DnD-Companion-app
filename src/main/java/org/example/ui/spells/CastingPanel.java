@@ -98,12 +98,7 @@ public final class CastingPanel extends JPanel implements LiveView {
         super(new BorderLayout(0, 12));
         this.session = session;
         this.charisma = charisma;
-        spellbookAction =
-                () ->
-                        AppStyle.openWindow(
-                                this,
-                                "Sorcerer spellbook",
-                                new SpellBookPanel(session.selection()));
+        spellbookAction = () -> AppStyle.openWindow(this, "Spell Library", new SpellLibraryPanel(session, () -> new org.example.domain.character.CharacterState(session.selection().level(), charisma.getAsInt(), session.selection().subclass(), session.selection().chosenSpells(), session.selection().species(), session.snapshot())));
         setOpaque(true);
         setBackground(AppStyle.BACKGROUND);
         setBorder(new EmptyBorder(14, 14, 14, 14));

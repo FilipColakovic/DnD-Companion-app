@@ -190,8 +190,8 @@ public final class GrimoireChecks {
 
     private static void characterAndRests(GrimoirePanel dashboard) {
         dashboard.showPage("Character");
-        JSlider level = first(dashboard.characterPanel(), JSlider.class);
-        level.setValue(5);
+        var level = dashboard.characterController();
+        level.setLevel(5);
         check(
                 label(dashboard, "sidebar-lineage").contains("5")
                         && label(dashboard, "sidebar-dc").contains("14"),
