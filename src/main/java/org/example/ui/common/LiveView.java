@@ -1,2 +1,5 @@
 package org.example.ui.common;
-public interface LiveView { void dispose(); }
+
+public interface LiveView {
+    void dispose();
+}

@@ -1,12 +1,23 @@
 package org.example.ui.common;
 
+import java.awt.BasicStroke;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+
 import javax.swing.Icon;
-import java.awt.*;
 
 /** Small vector book icon that remains readable without an emoji font or image asset. */
 public final class SpellBookIcon implements Icon {
-    public int getIconWidth() { return 24; }
-    public int getIconHeight() { return 24; }
+    public int getIconWidth() {
+        return 24;
+    }
+
+    public int getIconHeight() {
+        return 24;
+    }
+
     public void paintIcon(Component component, Graphics graphics, int x, int y) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.translate(x, y);

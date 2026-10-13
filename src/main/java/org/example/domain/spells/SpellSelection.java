@@ -15,9 +15,17 @@ public final class SpellSelection {
     private SorcererRules.Subclass subclass = SorcererRules.Subclass.ABERRANT;
     private final CopyOnWriteArrayList<Runnable> listeners = new CopyOnWriteArrayList<>();
 
-    public void addChangeListener(Runnable listener) { listeners.add(listener); }
-    public void removeChangeListener(Runnable listener) { listeners.remove(listener); }
-    private void changed() { listeners.forEach(Runnable::run); }
+    public void addChangeListener(Runnable listener) {
+        listeners.add(listener);
+    }
+
+    public void removeChangeListener(Runnable listener) {
+        listeners.remove(listener);
+    }
+
+    private void changed() {
+        listeners.forEach(Runnable::run);
+    }
 
     public void setCharacter(int level, SorcererRules.Subclass subclass) {
         setCharacter(level, subclass, species);
@@ -26,16 +34,26 @@ public final class SpellSelection {
     public void setCharacter(int level, SorcererRules.Subclass subclass, Species species) {
         SorcererRules.calculate(level, 17, subclass); // Validate before updating state.
         java.util.Objects.requireNonNull(species);
-        if (this.level == level && this.subclass == subclass && this.species == species) { return; }
+        if (this.level == level && this.subclass == subclass && this.species == species) {
+            return;
+        }
         this.level = level;
         this.subclass = subclass;
         this.species = species;
         changed();
     }
-    public int level() { return level; }
-    public Set<String> chosenSpells() { return Set.copyOf(choices); }
 
-    /** Restore all manual choices, including dormant or over-limit choices after a level decrease. */
+    public int level() {
+        return level;
+    }
+
+    public Set<String> chosenSpells() {
+        return Set.copyOf(choices);
+    }
+
+    /**
+     * Restore all manual choices, including dormant or over-limit choices after a level decrease.
+     */
     public void restoreChoices(Set<String> names) {
         Set<String> restored = Set.copyOf(names);
         for (String name : restored) {
@@ -47,59 +65,121 @@ public final class SpellSelection {
         choices.addAll(restored);
         changed();
     }
-    public SorcererRules.Subclass subclass() { return subclass; }
-    public Species species() { return species; }
-    public boolean speciesSpell(SpellCatalog.Spell spell) { return species.grants(spell.name(), level); }
-    public java.util.List<SpellCatalog.Spell> catalog() {
-        return SpellCatalog.all().stream().filter(spell -> spell.sorcererSpell()
-                || SpellCatalog.unlockLevel(spell, subclass) > 0
-                || species.grants().stream().anyMatch(grant -> grant.name().equals(spell.name()))).toList();
+
+    public SorcererRules.Subclass subclass() {
+        return subclass;
     }
-    public int maxSpellLevel() { return Math.min(9, (level + 1) / 2); }
+
+    public Species species() {
+        return species;
+    }
+
+    public boolean speciesSpell(SpellCatalog.Spell spell) {
+        return species.grants(spell.name(), level);
+    }
+
+    public java.util.List<SpellCatalog.Spell> catalog() {
+        return SpellCatalog.all().stream()
+                .filter(
+                        spell ->
+                                spell.sorcererSpell()
+                                        || SpellCatalog.unlockLevel(spell, subclass) > 0
+                                        || species.grants().stream()
+                                                .anyMatch(
+                                                        grant -> grant.name().equals(spell.name())))
+                .toList();
+    }
+
+    public int maxSpellLevel() {
+        return Math.min(9, (level + 1) / 2);
+    }
+
     public boolean automatic(SpellCatalog.Spell spell) {
         return SpellCatalog.alwaysPrepared(spell, level, subclass) || speciesSpell(spell);
     }
+
     public boolean available(SpellCatalog.Spell spell) {
         return automatic(spell) || spell.sorcererSpell() && spell.level() <= maxSpellLevel();
     }
+
     public boolean selected(SpellCatalog.Spell spell) {
         return automatic(spell) || choices.contains(spell.name());
     }
+
     public int limit(boolean cantrip) {
         var stats = SorcererRules.calculate(level, 17, subclass);
-        return cantrip ? stats.cantrips() - (level >= 3 && subclass == SorcererRules.Subclass.ABERRANT ? 1 : 0)
+        return cantrip
+                ? stats.cantrips()
+                        - (level >= 3 && subclass == SorcererRules.Subclass.ABERRANT ? 1 : 0)
                 : stats.basePreparedSpells();
     }
+
     public int chosenCount(boolean cantrip) {
-        return (int) SpellCatalog.all().stream().filter(spell -> (spell.level() == 0) == cantrip)
-                .filter(spell -> choices.contains(spell.name()) && available(spell) && !automatic(spell)).count();
+        return (int)
+                SpellCatalog.all().stream()
+                        .filter(spell -> (spell.level() == 0) == cantrip)
+                        .filter(
+                                spell ->
+                                        choices.contains(spell.name())
+                                                && available(spell)
+                                                && !automatic(spell))
+                        .count();
     }
+
     public int automaticCount() {
         return (int) SpellCatalog.all().stream().filter(this::automatic).count();
     }
+
     public int speciesCount(boolean cantrip) {
-        return (int) SpellCatalog.all().stream().filter(this::speciesSpell)
-                .filter(spell -> (spell.level() == 0) == cantrip)
-                .filter(spell -> !SpellCatalog.alwaysPrepared(spell, level, subclass)).count();
+        return (int)
+                SpellCatalog.all().stream()
+                        .filter(this::speciesSpell)
+                        .filter(spell -> (spell.level() == 0) == cantrip)
+                        .filter(spell -> !SpellCatalog.alwaysPrepared(spell, level, subclass))
+                        .count();
     }
-    /** Return a message if selection is refused. Deselecting is always allowed for manual choices. */
+
+    /**
+     * Return a message if selection is refused. Deselecting is always allowed for manual choices.
+     */
     public String choose(SpellCatalog.Spell spell, boolean selected) {
-        if (automatic(spell)) { return "This spell is granted by your subclass or species."; }
-        if (!selected) { choices.remove(spell.name()); changed(); return ""; }
-        if (!available(spell)) { return "This spell isn't available at your current Sorcerer level."; }
-        if (choices.contains(spell.name())) { return ""; }
+        if (automatic(spell)) {
+            return "This spell is granted by your subclass or species.";
+        }
+        if (!selected) {
+            choices.remove(spell.name());
+            changed();
+            return "";
+        }
+        if (!available(spell)) {
+            return "This spell isn't available at your current Sorcerer level.";
+        }
+        if (choices.contains(spell.name())) {
+            return "";
+        }
         boolean cantrip = spell.level() == 0;
         if (chosenCount(cantrip) >= limit(cantrip)) {
-            return "Remove a " + (cantrip ? "cantrip" : "prepared spell") + " before choosing another.";
+            return "Remove a "
+                    + (cantrip ? "cantrip" : "prepared spell")
+                    + " before choosing another.";
         }
         choices.add(spell.name());
         changed();
         return "";
     }
+
     public String summary() {
-        String counts = "Cantrips: " + chosenCount(true) + " / " + limit(true)
-                + "    Prepared spells: " + chosenCount(false) + " / " + limit(false)
-                + "    Automatic spells: " + automaticCount();
+        String counts =
+                "Cantrips: "
+                        + chosenCount(true)
+                        + " / "
+                        + limit(true)
+                        + "    Prepared spells: "
+                        + chosenCount(false)
+                        + " / "
+                        + limit(false)
+                        + "    Automatic spells: "
+                        + automaticCount();
         if (chosenCount(true) > limit(true) || chosenCount(false) > limit(false)) {
             counts += "    Over limit — remove choices.";
         }

@@ -2,42 +2,111 @@ package org.example.domain.character;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /** PHB 2024 only. Original short summaries; source links provide complete published rules. */
 public final class FeatCatalog {
     public enum Category {
-        ORIGIN("Origin"), GENERAL("General"), FIGHTING_STYLE("Fighting Style"), EPIC_BOON("Epic Boon");
+        ORIGIN("Origin"),
+        GENERAL("General"),
+        FIGHTING_STYLE("Fighting Style"),
+        EPIC_BOON("Epic Boon");
         private final String label;
-        Category(String label) { this.label=label; }
-        public String toString() { return label; }
+
+        Category(String label) {
+            this.label = label;
+        }
+
+        public String toString() {
+            return label;
+        }
     }
-    public record Feat(String name,Category category,String prerequisite,String abilityIncrease,String summary) {
-        public int minimumLevel() { return category==Category.GENERAL ? 4 : category==Category.EPIC_BOON ? 19 : 1; }
-        public String sourceUrl() { return "https://roll20.net/compendium/dnd5e/Feats%3A"+URLEncoder.encode(name,StandardCharsets.UTF_8).replace("+","%20")+"?expansion=32231"; }
-        public boolean repeatable() { return Set.of("Ability Score Improvement","Elemental Adept","Magic Initiate","Skilled").contains(name); }
-        public String requirements(int level,int charisma) {
-            if(level<minimumLevel())return "Requires level "+minimumLevel()+" (current: "+level+")";
-            if(category==Category.FIGHTING_STYLE)return "Requires the Fighting Style feature; single-class Sorcerers do not have it.";
-            if(name.equals("Actor") && charisma<13)return "Requires Charisma 13 (current: "+charisma+")";
+
+    public record Feat(
+            String name,
+            Category category,
+            String prerequisite,
+            String abilityIncrease,
+            String summary) {
+        public int minimumLevel() {
+            return category == Category.GENERAL ? 4 : category == Category.EPIC_BOON ? 19 : 1;
+        }
+
+        public String sourceUrl() {
+            return "https://roll20.net/compendium/dnd5e/Feats%3A"
+                    + URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20")
+                    + "?expansion=32231";
+        }
+
+        public boolean repeatable() {
+            return Set.of(
+                            "Ability Score Improvement",
+                            "Elemental Adept",
+                            "Magic Initiate",
+                            "Skilled")
+                    .contains(name);
+        }
+
+        public String requirements(int level, int charisma) {
+            if (level < minimumLevel())
+                return "Requires level " + minimumLevel() + " (current: " + level + ")";
+            if (category == Category.FIGHTING_STYLE)
+                return "Requires the Fighting Style feature; single-class Sorcerers do not have"
+                           + " it.";
+            if (name.equals("Actor") && charisma < 13)
+                return "Requires Charisma 13 (current: " + charisma + ")";
             return "";
         }
+
         public boolean needsConfirmation(int charisma) {
-            if(prerequisite.isEmpty() || prerequisite.equals("Spellcasting"))return false;
-            if(prerequisite.equals("CHA 13"))return false;
-            if(prerequisite.contains("CHA") && charisma>=13)return false;
+            if (prerequisite.isEmpty() || prerequisite.equals("Spellcasting")) return false;
+            if (prerequisite.equals("CHA 13")) return false;
+            if (prerequisite.contains("CHA") && charisma >= 13) return false;
             return true;
         }
     }
-    private static final List<Feat> ALL = FeatCatalog.DATA.lines().filter(s -> !s.isBlank()).map(line -> {
-        String[] values=line.split("\\|",-1);
-        return new Feat(values[0],Category.valueOf(values[1]),values[2],values[3],values[4]);
-    }).sorted(Comparator.comparing(Feat::name)).toList();
-    public static List<Feat> all() { return ALL; }
-    public static Feat named(String name) { return ALL.stream().filter(f -> f.name().equals(name)).findFirst().orElseThrow(() -> new IllegalArgumentException("Unknown PHB 2024 feat: "+name)); }
-    public static int nextMilestone(int level) { return java.util.stream.IntStream.of(4,8,12,16,19).filter(n -> n>level).findFirst().orElse(0); }
+
+    private static final List<Feat> ALL =
+            FeatCatalog.DATA
+                    .lines()
+                    .filter(s -> !s.isBlank())
+                    .map(
+                            line -> {
+                                String[] values = line.split("\\|", -1);
+                                return new Feat(
+                                        values[0],
+                                        Category.valueOf(values[1]),
+                                        values[2],
+                                        values[3],
+                                        values[4]);
+                            })
+                    .sorted(Comparator.comparing(Feat::name))
+                    .toList();
+
+    public static List<Feat> all() {
+        return ALL;
+    }
+
+    public static Feat named(String name) {
+        return ALL.stream()
+                .filter(f -> f.name().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown PHB 2024 feat: " + name));
+    }
+
+    public static int nextMilestone(int level) {
+        return java.util.stream.IntStream.of(4, 8, 12, 16, 19)
+                .filter(n -> n > level)
+                .findFirst()
+                .orElse(0);
+    }
+
     private FeatCatalog() {}
-    private static final String DATA = """
+
+    private static final String DATA =
+"""
 Ability Score Improvement|GENERAL||Any +2, or two different abilities +1; maximum 20|Improve ability scores. This feat can be taken again at later eligible milestones.
 Actor|GENERAL|CHA 13|CHA +1; maximum 20|Impersonate people more convincingly and imitate voices or other creature sounds.
 Alert|ORIGIN|||Add proficiency to initiative and optionally exchange initiative with a willing ally.

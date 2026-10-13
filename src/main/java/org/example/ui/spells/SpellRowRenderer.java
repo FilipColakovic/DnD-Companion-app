@@ -3,10 +3,17 @@ package org.example.ui.spells;
 import org.example.domain.spells.SpellDetails;
 import org.example.ui.common.AppStyle;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Insets;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
 
 /** Plain Swing text wraps consistently with the user's font scaling and column width. */
 final class SpellRowRenderer extends JPanel implements TableCellRenderer {
@@ -32,8 +39,9 @@ final class SpellRowRenderer extends JPanel implements TableCellRenderer {
         add(description, BorderLayout.CENTER);
     }
 
-    @Override public Component getTableCellRendererComponent(JTable table, Object value,
-            boolean selected, boolean focused, int row, int column) {
+    @Override
+    public Component getTableCellRendererComponent(
+            JTable table, Object value, boolean selected, boolean focused, int row, int column) {
         var spell = model.spellAt(table.convertRowIndexToModel(row));
         title.setText(spell.name());
         description.setText(SpellDetails.forSpell(spell).shortDescription());
@@ -47,17 +55,24 @@ final class SpellRowRenderer extends JPanel implements TableCellRenderer {
 
     int requiredHeight(int width) {
         description.setSize(Math.max(1, width - 2 * PADDING), Short.MAX_VALUE);
-        return Math.max(64, 2 * PADDING + title.getPreferredSize().height + GAP
-                + description.getPreferredSize().height);
+        return Math.max(
+                64,
+                2 * PADDING
+                        + title.getPreferredSize().height
+                        + GAP
+                        + description.getPreferredSize().height);
     }
 
     void updateRowHeights(JTable table) {
         int column = table.convertColumnIndexToView(2);
         int width = table.getColumnModel().getColumn(column).getWidth();
         for (int row = 0; row < table.getRowCount(); row++) {
-            getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
+            getTableCellRendererComponent(
+                    table, table.getValueAt(row, column), false, false, row, column);
             int height = requiredHeight(width);
-            if (table.getRowHeight(row) != height) { table.setRowHeight(row, height); }
+            if (table.getRowHeight(row) != height) {
+                table.setRowHeight(row, height);
+            }
         }
     }
 }
