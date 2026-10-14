@@ -1,6 +1,6 @@
 # 2024 spell and Metamagic review
 
-Reviewed 2026-10-10: all 178 bundled Sorcerer, subclass and species spell entries,
+Original review 2026-10-10: 178 Sorcerer, subclass and species entries. Extended 2026-10-14 to 219 entries for feat-granted spells,
 and all ten Metamagic options. This table records the implemented candidates;
 targets, actual rolls and conditions still determine whether an option can be used.
 
@@ -35,7 +35,9 @@ duration qualifies for Extended; a duration at/above 24 hours cannot increase.
 The table uses base spell level and character level 1 for cantrip damage. Slots
 and character levels update supported formulas in the app. Candidate conditions
 appear in casting tooltips and the Metamagic detail list. Candidates do not bypass
-Sorcery Point, combination, turn or slot restrictions.
+Sorcery Point, combination or slot restrictions. Turn rules remain player-managed.
+
+The extension includes complete Magic Initiate, Fey/Shadow-Touched and Ritual Caster choice data. Feat range/component overrides, healing rerolls and chosen damage types are derived separately; published descriptions remain intact. See [FEAT_AUTOMATION.md](FEAT_AUTOMATION.md).
 
 | Spell | Damage annotation | Metamagic candidates |
 | --- | --- | --- |
@@ -44,9 +46,11 @@ Sorcery Point, combination, turn or slot restrictions.
 | Chill Touch | Damage roll: 1d10 Necrotic · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle |
 | Dancing Lights | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Druidcraft | No direct damage. Apply the spell's described effects. | Distant, Quickened, Subtle |
+| Eldritch Blast | Resolve damage timing, targets and conditions from the spell text. | Distant, Empowered, Quickened, Seeking, Subtle |
 | Elementalism | No direct damage. Apply the spell's described effects. | Distant, Quickened, Subtle |
 | Fire Bolt | Damage roll: 1d10 Fire · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
 | Friends | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle |
+| Guidance | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Light | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Mage Hand | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Mending | No direct damage. Apply the spell's described effects. | Distant, Subtle |
@@ -55,42 +59,81 @@ Sorcery Point, combination, turn or slot restrictions.
 | Minor Illusion | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Poison Spray | Damage roll: 1d12 Poison · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
 | Prestidigitation | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
+| Produce Flame | Damage roll: 1d8 Fire · on a hit. Follow the spell text for additional effects. | Empowered, Extended, Seeking, Subtle, Transmuted |
 | Ray of Frost | Damage roll: 1d8 Cold · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
+| Resistance | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
+| Sacred Flame | Damage roll: 1d8 Radiant · failed save; target gains no cover benefit. Follow the spell text for additional effects. | Careful, Distant, Empowered, Heightened, Quickened, Subtle |
+| Shillelagh | No direct damage. Apply the spell's described effects. | Extended, Subtle |
 | Shocking Grasp | Damage roll: 1d8 Lightning · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
 | Sorcerous Burst | Damage roll: 1d8 chosen type (exploding) · on a hit; extra dice capped by spellcasting modifier. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
+| Spare the Dying | No direct damage. Apply the spell's described effects. | Distant, Quickened, Subtle |
+| Starry Wisp | Damage roll: 1d8 Radiant · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle |
 | Thaumaturgy | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
+| Thorn Whip | Damage roll: 1d6 Piercing · on a hit; pull eligible target up to 10 feet. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle |
 | Thunderclap | Damage roll: 1d6 Thunder · failed save. Follow the spell text for additional effects. | Careful, Empowered, Heightened, Quickened, Subtle, Transmuted |
+| Toll the Dead | Resolve damage timing, targets and conditions from the spell text. | Careful, Distant, Empowered, Heightened, Quickened, Subtle |
 | True Strike | Damage: weapon damage + spellcasting ability modifier. The spell replaces the weapon's normal ability modifier; choose Radiant or the weapon's normal type for its base damage. | Empowered, Quickened, Seeking, Subtle |
+| Vicious Mockery | Resolve damage timing, targets and conditions from the spell text. | Careful, Distant, Empowered, Heightened, Quickened, Subtle |
+| Word of Radiance | Damage roll: 1d6 Radiant · failed save, per chosen creature. Follow the spell text for additional effects. | Careful, Empowered, Heightened, Quickened, Subtle |
 | Alarm | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
+| Animal Friendship | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle, Twinned |
 | Arms of Hadar | Damage roll: 2d6 Necrotic · failed save; half on success. Follow the spell text for additional effects. | Careful, Empowered, Heightened, Quickened, Subtle |
+| Bane | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle, Twinned |
+| Bless | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle, Twinned |
 | Burning Hands | Damage roll: 3d6 Fire · failed save; half on success. Follow the spell text for additional effects. | Careful, Empowered, Heightened, Quickened, Subtle, Transmuted |
 | Charm Person | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle, Twinned |
 | Chromatic Orb | Damage roll: 3d8 chosen type · per hit; leaps require matching dice. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
 | Color Spray | No direct damage. Apply the spell's described effects. | Careful, Heightened, Quickened, Subtle |
 | Command | No direct damage. Apply the spell's described effects. | Careful, Distant, Heightened, Quickened, Subtle, Twinned |
+| Compelled Duel | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Subtle |
 | Comprehend Languages | No direct damage. Apply the spell's described effects. | Extended, Quickened, Subtle |
+| Create or Destroy Water | No direct damage. Apply the spell's described effects. | Distant, Quickened, Subtle |
+| Cure Wounds | No direct damage. Apply the spell's described effects. | Distant, Quickened, Subtle |
+| Detect Evil and Good | No direct damage. Apply the spell's described effects. | Extended, Quickened, Subtle |
 | Detect Magic | No direct damage. Apply the spell's described effects. | Extended, Quickened, Subtle |
+| Detect Poison and Disease | No direct damage. Apply the spell's described effects. | Extended, Subtle |
 | Disguise Self | No direct damage. Apply the spell's described effects. | Extended, Quickened, Subtle |
 | Dissonant Whispers | Damage roll: 3d6 Psychic · failed save; half on success. Follow the spell text for additional effects. | Careful, Distant, Empowered, Heightened, Quickened, Subtle |
+| Divine Favor | No direct damage. Apply the spell's described effects. | Extended, Subtle |
+| Divine Smite | No direct damage. Apply the spell's described effects. | Subtle |
+| Ensnaring Strike | No direct damage. Apply the spell's described effects. | Extended, Subtle |
+| Entangle | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle |
 | Expeditious Retreat | No direct damage. Apply the spell's described effects. | Extended, Subtle |
 | Faerie Fire | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle |
 | False Life | No direct damage. Apply the spell's described effects. | Quickened, Subtle |
 | Feather Fall | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
+| Find Familiar | No direct damage. Apply the spell's described effects. | Distant, Subtle |
 | Fog Cloud | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
+| Goodberry | No direct damage. Apply the spell's described effects. | Extended, Quickened, Subtle |
 | Grease | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle |
+| Guiding Bolt | Damage roll: 4d6 Radiant · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle |
+| Healing Word | No direct damage. Apply the spell's described effects. | Distant, Subtle |
 | Hellish Rebuke | Damage roll: 2d10 Fire · failed save; half on success. Follow the spell text for additional effects. | Careful, Distant, Empowered, Heightened, Subtle, Transmuted |
+| Heroism | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle, Twinned |
+| Hex | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
+| Hunter's Mark | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
 | Ice Knife | Hit: 1d10 Piercing. Hit or miss: a Dexterity save against the explosion, 2d6 Cold on failure, plus 1d6 Cold per slot level above 1. | Careful, Distant, Empowered, Heightened, Quickened, Seeking, Subtle, Transmuted |
+| Identify | No direct damage. Apply the spell's described effects. | Distant, Subtle |
+| Illusory Script | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
+| Inflict Wounds | Damage roll: 2d10 Necrotic · failed save; half on success. Follow the spell text for additional effects. | Careful, Distant, Empowered, Heightened, Quickened, Subtle |
 | Jump | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle, Twinned |
 | Longstrider | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle, Twinned |
 | Mage Armor | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Magic Missile | Damage roll: 1d4 + 1 Force · per dart. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Subtle |
 | Protection from Evil and Good | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
+| Purify Food and Drink | No direct damage. Apply the spell's described effects. | Distant, Subtle |
 | Ray of Sickness | Damage roll: 2d8 Poison · on a hit. Follow the spell text for additional effects. | Distant, Empowered, Quickened, Seeking, Subtle, Transmuted |
+| Sanctuary | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Subtle |
+| Searing Smite | No direct damage. Apply the spell's described effects. | Extended, Subtle |
 | Shield | No direct damage. Apply the spell's described effects. | Subtle |
+| Shield of Faith | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
 | Silent Image | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Sleep | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle |
 | Speak with Animals | No direct damage. Apply the spell's described effects. | Extended, Quickened, Subtle |
+| Tasha's Hideous Laughter | No direct damage. Apply the spell's described effects. | Careful, Distant, Extended, Heightened, Quickened, Subtle, Twinned |
+| Tenser's Floating Disk | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Thunderwave | Damage roll: 2d8 Thunder · failed save; half on success. Follow the spell text for additional effects. | Careful, Empowered, Heightened, Quickened, Subtle, Transmuted |
+| Unseen Servant | No direct damage. Apply the spell's described effects. | Distant, Extended, Subtle |
 | Witch Bolt | Initial hit: 2d12 Lightning + 1d12 per slot level above 1. Subsequent Bonus Action: 1d12 Lightning, even if the initial attack missed. | Distant, Empowered, Extended, Quickened, Seeking, Subtle, Transmuted |
 | Aid | No direct damage. Apply the spell's described effects. | Distant, Extended, Quickened, Subtle |
 | Alter Self | Natural Weapons option changes your Unarmed Strike to 1d6 of the growth's damage type + spellcasting ability modifier. Other options do not deal damage. | Extended, Quickened, Subtle |

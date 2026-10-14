@@ -59,7 +59,7 @@ try {
     & $javac -encoding UTF-8 -cp $dependency -d $classes $sources
     if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
     Copy-Item src/main/resources/* $classes -Recurse -Force
-    $headlessChecks = @('SorcererChecks','PlayChecks','SpellBookChecks','SpeciesChecks','GrimoireChecks','DamageDiceChecks','SpellRulesChecks','CharacterStoreChecks','SpellRepositoryChecks','CleanupRulesChecks')
+    $headlessChecks = @('SorcererChecks','PlayChecks','SpellBookChecks','SpeciesChecks','GrimoireChecks','DamageDiceChecks','SpellRulesChecks','CharacterStoreChecks','SpellRepositoryChecks','CleanupRulesChecks','FeatEffectsChecks')
     $failed = @()
     $passed = 0
     $skipped = 0

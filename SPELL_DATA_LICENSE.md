@@ -18,7 +18,7 @@ the official SRD 5.2.1, page 137. Casting-time labels are normalized for display
 Additional transcription corrections are retained in the catalog: Chain Lightning
 and Dissonant Whispers upcasting, Clairvoyance and Legend Lore casting times,
 Jump's material, Command's Approach option, Knock's targeting paragraph, and
-"up to" durations. The complete 178-spell mechanics review and compatibility
+"up to" durations. The original 178-spell review is extended to 219 spells for feat grants. The mechanics review and compatibility
 matrix are in [SPELL_RULES_AUDIT.md](SPELL_RULES_AUDIT.md).
 Species-associated spells are also bundled from the same SRD transcription.
 Species spell-grant names, unlock levels, and casting limits follow the
@@ -60,5 +60,6 @@ The Metamagic descriptions in `domain/character/Metamagic.java` are original con
 summaries checked against the [2024 Sorcerer class](https://roll20.net/compendium/dnd5e/Classes%3ASorcerer?expansion=32231).
 Rest recovery, Innate Sorcery, and progression were checked against the
 [2024 Basic Rules class chapter](https://www.dndbeyond.com/sources/dnd/br-2024/character-classes).
-The casting tracker follows the one-slot-per-turn restriction in the
-[2024 spellcasting chapter](https://www.dndbeyond.com/sources/dnd/br-2024/spells).
+The casting tracker validates resources per cast. It does not own a turn clock or enforce the spell-slot-per-turn rule; apply that rule at the table.
+
+Feat spell additions retain SRD attribution. Thirty-seven additional SRD descriptions come from the official Free Rules spell chapter, with metadata cross-checked against the SRD transcription. The remaining four (Toll the Dead, Word of Radiance, Compelled Duel and Thorn Whip) use original rules summaries checked against their licensed PHB 2024 references. Named Hideous Laughter/Floating Disk entries use their PHB names. Individual references are stored beside each record.

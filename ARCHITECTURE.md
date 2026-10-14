@@ -6,6 +6,7 @@ The app has one shared character and five dashboard pages. UI components render 
 
 - `application/CharacterController` owns character name, Charisma, the shared session, save protection, save callbacks and the saved checkpoint. It has no Swing dependency.
 - `domain/character/PlaySession` owns mutable resources and applies validated actions. `CastingRules` validates a read-only context before a successful cast spends resources and emits one session notification.
+- `FeatEffects` derives capped ability increases, repeatable choices and source-specific spell grants without changing base scores. `FeatActions` defines triggered actions/pools; `FeatCombatRules` and `EquipmentRules` handle confirmed equipment/circumstances. `HealingDice` applies supported healing formulas and Healer rerolls.
 - `CharacterChoices` defines required creation choices. `CharacterGrants` derives effective proficiency grants; `SkillRules` calculates bonuses; `HitPointRules` calculates fixed HP and supported bonuses.
 - `ChoiceIds` centralizes persisted identifiers and source scopes. `Proficiency` names skill tiers while retaining their saved numbers: 0, 1 and 2.
 - `CharacterState`, `PlayState`, `CharacterSheet` and `SpellSelection` retain their save formats and selection APIs. Character and spell SQLite schemas are unchanged.
@@ -24,7 +25,7 @@ The app has one shared character and five dashboard pages. UI components render 
 
 Use `GrimoirePanel.characterController()` for editing. `characterPanel()` remains a compatibility alias returning that nonvisual controller. The editing methods, checkpoint methods, combat selection methods and `SpellSelection` APIs remain available. The retired standalone Sorcerer and table-based spellbook UI classes are removed; callers should use dashboard pages. Prepared-spell links call `showPreparedSpells()` to open the filtered library.
 
-Skill and choice adapters preserve existing property keys and values. Legacy HP, dormant spells, manual overrides, save protection and checkpoint restoration remain covered by checks. This cleanup does not add multiclassing, multiple characters, inventory automation or new feat/spell automation.
+Skill and choice adapters preserve existing property keys and values. Legacy HP, dormant spells, manual overrides, save protection and checkpoint restoration remain covered by checks. Multiclassing, multiple characters and full inventory/encounter automation remain deferred. Feat automation is implemented by `FeatEffects`, `FeatActions`, `FeatCombatRules`, `EquipmentRules` and `HealingDice`, with `PlaySession` applying atomic operations. See [FEAT_AUTOMATION.md](FEAT_AUTOMATION.md).
 
 ## Verification
 
