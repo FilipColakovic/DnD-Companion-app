@@ -36,6 +36,7 @@ import javax.swing.SwingUtilities;
  */
 public final class CharacterChoicesChecks {
     public static void main(String[] args) throws Exception {
+        SwingUtilities.invokeAndWait(CharacterChoicesChecks::duplicateProficiencies);
         Map<Species, Integer> expected =
                 Map.ofEntries(
                         Map.entry(Species.AASIMAR, 1),
@@ -358,6 +359,62 @@ public final class CharacterChoicesChecks {
         System.out.println(
                 "Passed: all PHB species choices, source-aware skills and feats, confirmation,"
                     + " drafts, lineage abilities, Origin feat choices, themes and persistence.");
+    }
+
+    private static void duplicateProficiencies() {
+        SpellSelection selection = new SpellSelection();
+        selection.setCharacter(4, SorcererRules.Subclass.WILD_MAGIC, Species.HUMAN);
+        PlaySession session = new PlaySession(selection);
+        CharacterChoicesPanel panel = new CharacterChoicesPanel(session);
+        session.addListener(panel::refresh);
+        session.setSheet(session.sheet().withSkill(Skill.ARCANA, 1).withSkill(Skill.RELIGION, 2));
+        JCheckBox arcana = accessible(panel, JCheckBox.class, "sorcerer.skills option Arcana");
+        check(!arcana.isEnabled(), "Existing proficiency disables a new class skill choice");
+        arcana.doClick(0);
+        check(!arcana.isSelected(), "Disabled skill cannot be selected");
+        check(
+                !accessible(panel, JCheckBox.class, "sorcerer.skills option Religion").isEnabled(),
+                "Existing expertise also blocks a new proficiency");
+        JCheckBox deception =
+                accessible(panel, JCheckBox.class, "sorcerer.skills option Deception");
+        deception.doClick(0);
+        session.setSheet(session.sheet().withChoice("human.skill", List.of("Deception")));
+        check(
+                !deception.isEnabled() && !deception.isSelected(),
+                "Another grant invalidates a draft");
+        session.setSheet(session.sheet().withChoice("human.skill", List.of()));
+        check(deception.isEnabled(), "Removing another grant re-enables the skill");
+        deception.doClick(0);
+        accessible(panel, JCheckBox.class, "sorcerer.skills option Insight").doClick(0);
+        accessible(panel, JButton.class, "Confirm sorcerer.skills").doClick(0);
+        check(
+                session.proficiencyOptionAvailable("sorcerer.skills", "Deception"),
+                "A choice excludes its own saved proficiency when editing");
+        check(
+                !session.proficiencyOptionAvailable("human.skill", "Deception"),
+                "Class proficiency blocks a new species proficiency");
+        session.setSheet(session.sheet().withChoice("background", List.of("Noble")));
+        check(
+                !accessible(panel, JCheckBox.class, "background.Noble.feat.Skilled option History")
+                        .isEnabled(),
+                "Fixed background skill is disabled in background Skilled choices");
+        check(
+                !accessible(
+                                panel,
+                                JCheckBox.class,
+                                "background.Noble.feat.Skilled option Deception")
+                        .isEnabled(),
+                "Class grants update background choices live");
+        check(
+                !session.proficiencyOptionAvailable("feat.Skilled.copy.2", "Deception")
+                        && !session.proficiencyOptionAvailable(
+                                "feat.Skill Expert.skill", "Deception"),
+                "Repeatable Skilled and Skill Expert proficiency choices reject duplicates");
+        check(
+                session.proficiencyOptionAvailable("feat.Skill Expert.expertise", "Deception")
+                        && session.proficiencyOptionAvailable("feat.Keen Mind", "Arcana")
+                        && session.proficiencyOptionAvailable("feat.Observant", "Insight"),
+                "Expertise and proficiency promotion choices remain available");
     }
 
     private static void layout(Container container) {

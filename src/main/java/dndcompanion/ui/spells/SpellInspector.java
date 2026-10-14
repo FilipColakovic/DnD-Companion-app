@@ -12,6 +12,7 @@ import dndcompanion.domain.character.PlaySession;
 import dndcompanion.domain.character.SorcererRules;
 import dndcompanion.domain.spells.SpellCatalog;
 import dndcompanion.domain.spells.SpellDetails;
+import dndcompanion.domain.spells.SpellMechanics;
 import dndcompanion.ui.common.AppStyle;
 import dndcompanion.ui.common.TextUpdates;
 import dndcompanion.ui.spells.SpellLibraryComponents.Wrap;
@@ -72,6 +73,8 @@ final class SpellInspector extends JPanel implements Scrollable {
         row(codex, subtitle);
         for (Spec spec : Spec.values()) {
             JTextArea value = wrapped("");
+            value.setName("spell-inspector-" + spec.name().toLowerCase(java.util.Locale.ROOT));
+            value.getAccessibleContext().setAccessibleName(value.getName());
             values.put(spec, value);
             stats.add(
                     block(
@@ -126,14 +129,15 @@ final class SpellInspector extends JPanel implements Scrollable {
                                         session.selection().subclass())
                                 .proficiencyBonus()
                         + session.spellcastingModifier(spell, state.charisma());
+        boolean save = SpellMechanics.forcesSave(spell);
+        boolean attackRoll = SpellMechanics.hasAttack(spell);
+        String checks =
+                (save ? "Save DC " + (8 + attack) : "")
+                        + (save && attackRoll ? " // " : "")
+                        + (attackRoll ? "Attack " + String.format("%+d", attack) : "");
         set(
                 Spec.SPELLCASTING,
-                "Save DC "
-                        + (8 + attack)
-                        + " // Attack "
-                        + String.format("%+d", attack)
-                        + " // "
-                        + session.spellcastingAbility(spell),
+                checks.isEmpty() ? "No attack roll or saving throw." : checks,
                 sameSpell);
         set(
                 Spec.SPELL_FLAGS,

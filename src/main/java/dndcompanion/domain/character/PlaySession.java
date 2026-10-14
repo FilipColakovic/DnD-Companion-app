@@ -505,6 +505,27 @@ public final class PlaySession {
         return grants().tier(sheet, skill);
     }
 
+    /** New proficiency choices exclude their own grant so saved choices remain editable. */
+    public boolean proficiencyOptionAvailable(String choiceId, String option) {
+        boolean newProficiency =
+                choiceId.equals(ChoiceIds.SORCERER_SKILLS)
+                        || choiceId.equals(ChoiceIds.HUMAN_SKILL)
+                        || choiceId.equals(ChoiceIds.ELF_SKILL)
+                        || choiceId.equals(ChoiceIds.FEAT_SKILL_EXPERT_SKILL)
+                        || choiceId.matches("(?:.*\\.)?feat\\.Skilled(?:\\.copy\\.[0-9]+)?");
+        if (!newProficiency) return true;
+        CharacterSheet.Skill skill =
+                Arrays.stream(CharacterSheet.Skill.values())
+                        .filter(item -> item.label.equals(option))
+                        .findFirst()
+                        .orElse(null);
+        if (skill == null) return true;
+        CharacterSheet withoutChoice = sheet.withChoice(choiceId, List.of());
+        return CharacterGrants.calculate(withoutChoice, selection.species(), feats.keySet())
+                        .tier(withoutChoice, skill)
+                == 0;
+    }
+
     public int skillTierExcluding(CharacterSheet.Skill skill, String excludedFeat) {
         Set<String> active = new HashSet<>(feats.keySet());
         active.remove(excludedFeat);

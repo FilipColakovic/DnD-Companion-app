@@ -1,10 +1,13 @@
 package dndcompanion.ui.spells;
 
 import dndcompanion.domain.character.CharacterState;
+import dndcompanion.domain.character.PlaySession;
 import dndcompanion.domain.character.SorcererRules;
 import dndcompanion.domain.character.Species;
 import dndcompanion.domain.spells.SpellCatalog;
 import dndcompanion.domain.spells.SpellDetails;
+import dndcompanion.domain.spells.SpellMechanics;
+import dndcompanion.domain.spells.SpellSelection;
 import dndcompanion.ui.GrimoirePanel;
 
 import java.awt.Component;
@@ -30,6 +33,7 @@ import javax.swing.SwingUtilities;
 
 public final class SpellLibraryChecks {
     public static void main(String[] args) throws Exception {
+        SwingUtilities.invokeAndWait(SpellLibraryChecks::relevantSpellChecks);
         SwingUtilities.invokeAndWait(
                 () -> {
                     var workspace =
@@ -428,6 +432,40 @@ public final class SpellLibraryChecks {
         for (String text : new String[] {"Concentration", "Psionic", "Ritual", "Prepared only"}) {
             AbstractButton button = findText(library, text);
             if (button.isSelected()) button.doClick(0);
+        }
+    }
+
+    private static void relevantSpellChecks() {
+        SpellSelection selection = new SpellSelection();
+        selection.setCharacter(3, SorcererRules.Subclass.WILD_MAGIC, Species.DWARF);
+        PlaySession session = new PlaySession(selection);
+        CharacterState state =
+                new CharacterState(
+                        3, 18, SorcererRules.Subclass.WILD_MAGIC, Set.of(), Species.DWARF);
+        SpellInspector inspector = new SpellInspector(session, () -> state);
+        for (var spell : SpellCatalog.all()) {
+            inspector.refresh(spell);
+            String checks =
+                    find(inspector, JTextArea.class, "spell-inspector-spellcasting").getText();
+            check(
+                    checks.contains("Save DC") == SpellMechanics.forcesSave(spell),
+                    "Only save spells display a save DC: " + spell.name());
+            check(
+                    checks.contains("Attack ") == SpellMechanics.hasAttack(spell),
+                    "Only attack spells display an attack modifier: " + spell.name());
+            switch (spell.name()) {
+                case "Suggestion", "Ensnaring Strike", "Searing Smite" ->
+                        check(checks.equals("Save DC 14"), "Save-only spell: " + spell.name());
+                case "Fire Bolt", "Poison Spray" ->
+                        check(checks.equals("Attack +6"), "Attack-only spell: " + spell.name());
+                case "Ice Knife" ->
+                        check(checks.equals("Save DC 14 // Attack +6"), "Both Ice Knife checks");
+                case "Shield", "Mage Hand", "Bless" ->
+                        check(
+                                checks.equals("No attack roll or saving throw."),
+                                "Utility/buff spell has no invented roll: " + spell.name());
+                default -> {}
+            }
         }
     }
 

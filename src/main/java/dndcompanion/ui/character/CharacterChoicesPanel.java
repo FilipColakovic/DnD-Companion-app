@@ -229,16 +229,33 @@ final class CharacterChoicesPanel extends JPanel {
         }
 
         void update() {
+            checks.forEach(
+                    (name, box) -> {
+                        boolean available = session.proficiencyOptionAvailable(choice.id(), name);
+                        if (!available) box.setSelected(false);
+                        box.setToolTipText(available ? null : "Already proficient in this skill.");
+                    });
             int size = selected().size();
             counter.setText(size + " / " + choice.count());
             select.setEnabled(choice.accepts(selected()));
-            checks.values()
-                    .forEach(box -> box.setEnabled(box.isSelected() || size < choice.count()));
+            checks.forEach(
+                    (name, box) ->
+                            box.setEnabled(
+                                    session.proficiencyOptionAvailable(choice.id(), name)
+                                            && (box.isSelected() || size < choice.count())));
         }
 
         void confirm() {
             List<String> values = selected();
-            if (!choice.accepts(values)) return;
+            if (!choice.accepts(values)
+                    || values.stream()
+                            .anyMatch(
+                                    value ->
+                                            !session.proficiencyOptionAvailable(
+                                                    choice.id(), value))) {
+                update();
+                return;
+            }
             if (choice.id().equals(CharacterChoices.HUMAN_FEAT.id())) {
                 var feat = FeatCatalog.named(values.getFirst());
                 if (session.snapshot().feats().containsKey(feat.name()) && !feat.repeatable()) {
