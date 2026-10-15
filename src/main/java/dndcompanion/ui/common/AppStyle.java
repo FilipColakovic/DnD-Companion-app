@@ -92,6 +92,7 @@ public final class AppStyle {
 
     private static Color surfaceColor(String role) {
         if ("noteBlue".equals(role)) return dark ? new Color(0x293c60) : new Color(0xd3dcff);
+        if ("noteRed".equals(role)) return dark ? new Color(0x4f2d2c) : new Color(0xffdfdc);
         if ("metamagicCard".equals(role)) return dark ? LOWEST : new Color(0xf8f5fc);
         if ("metamagicActive".equals(role)) return dark ? new Color(0x494024) : new Color(0xffefb3);
         if ("badgeRed".equals(role)) return new Color(0xe7362a);

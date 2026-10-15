@@ -47,6 +47,7 @@ public final class FeatActionsPanel extends JPanel {
                 buttons.entrySet().stream()
                         .filter(e -> session.feats().containsKey(e.getKey().feat()))
                         .toList();
+        ((GridLayout) actions.getLayout()).setColumns(active.size() == 1 ? 1 : 2);
         if (actions.getComponentCount() != active.size()
                 || active.stream().anyMatch(e -> e.getValue().getParent() != actions)) {
             actions.removeAll();
@@ -56,7 +57,13 @@ public final class FeatActionsPanel extends JPanel {
         active.forEach(
                 e -> {
                     int remaining = session.remainingFeatUses(e.getKey());
-                    e.getValue().setEnabled(remaining > 0);
+                    e.getValue().setEnabled(session.featActionAvailable(e.getKey()));
+                    e.getValue()
+                            .setToolTipText(
+                                    e.getKey().feat().equals("Telekinetic")
+                                                    && !session.featActionAvailable(e.getKey())
+                                            ? "Cast Mage Hand first."
+                                            : e.getKey().feat() + ": " + e.getKey().trigger());
                     e.getValue()
                             .setText(
                                     e.getKey().label()

@@ -122,7 +122,8 @@ final class FeatFilters extends JPanel {
     private boolean matches(FeatCatalog.Feat feat, CharacterState state) {
         String query = search.getText().strip().toLowerCase(Locale.ROOT);
         return (!available.isSelected()
-                        || feat.requirements(state.level(), state.charisma()).isEmpty())
+                        || feat.requirements(state.level(), state.charisma(), state.classId())
+                                .isEmpty())
                 && (!equipped.isSelected() || state.equippedFeats().containsKey(feat.name()))
                 && (!asi.isSelected() || !feat.abilityIncrease().isEmpty())
                 && (feat.name() + " " + feat.prerequisite() + " " + feat.summary())

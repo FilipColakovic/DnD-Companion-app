@@ -50,9 +50,13 @@ public final class FeatCatalog {
         }
 
         public String requirements(int level, int charisma) {
+            return requirements(level, charisma, ClassId.SORCERER);
+        }
+
+        public String requirements(int level, int charisma, ClassId classId) {
             if (level < minimumLevel())
                 return "Requires level " + minimumLevel() + " (current: " + level + ")";
-            if (category == Category.FIGHTING_STYLE)
+            if (category == Category.FIGHTING_STYLE && classId != ClassId.FIGHTER)
                 return "Requires the Fighting Style feature; single-class Sorcerers do not have"
                         + " it.";
             if (name.equals("Actor") && charisma < 13)
@@ -101,6 +105,13 @@ public final class FeatCatalog {
                 .filter(n -> n > level)
                 .findFirst()
                 .orElse(0);
+    }
+
+    public static int nextMilestone(CharacterState state) {
+        return (state.classId() == ClassId.FIGHTER
+                        ? FighterRules.featLevels()
+                        : java.util.List.of(4, 8, 12, 16, 19))
+                .stream().filter(n -> n > state.level()).findFirst().orElse(0);
     }
 
     private FeatCatalog() {}

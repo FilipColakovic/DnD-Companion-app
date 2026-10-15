@@ -41,6 +41,18 @@ public record CharacterState(
         SorcererRules.calculate(level, charisma, subclass);
         java.util.Objects.requireNonNull(species);
         java.util.Objects.requireNonNull(play);
+        play = play.withSheet(play.sheet().withAbility(CharacterSheet.Ability.CHA, charisma));
+        for (var ability : CharacterSheet.Ability.values())
+            play =
+                    play.withSheet(
+                            play.sheet()
+                                    .withAbility(ability, play.sheet().score(ability, charisma)));
+        var progression = play.sheet().choice("class.progression");
+        if (!progression.isEmpty()
+                && (progression.size() != 1
+                        || ClassProgression.decode(progression.getFirst()).level() != level))
+            throw new IllegalArgumentException(
+                    "Only one class matching the character level is supported.");
         name = java.util.Objects.requireNonNull(name).strip();
         if (name.isEmpty() || name.length() > 60) {
             throw new IllegalArgumentException("Character name must contain 1–60 characters.");
@@ -59,5 +71,34 @@ public record CharacterState(
 
     public java.util.Map<String, String> equippedFeats() {
         return CharacterChoices.feats(play.sheet(), species, play.feats());
+    }
+
+    public java.util.List<ClassProgression> classes() {
+        return ClassProgression.from(this);
+    }
+
+    public ClassId classId() {
+        return classes().getFirst().classId();
+    }
+
+    public static CharacterState create(String name, ClassId id) {
+        CharacterSheet sheet =
+                CharacterSheet.defaults()
+                        .withField(CharacterSheet.Field.AUTOMATIC_BACKGROUND_ABILITIES, 1);
+        if (id == ClassId.FIGHTER)
+            sheet =
+                    sheet.withChoice("class.progression", java.util.List.of("FIGHTER:1:CHAMPION"))
+                            .withAbility(CharacterSheet.Ability.STR, 16)
+                            .withAbility(CharacterSheet.Ability.CON, 14);
+        else if (id != ClassId.SORCERER)
+            throw new IllegalArgumentException("Class is not implemented.");
+        return new CharacterState(
+                1,
+                id == ClassId.SORCERER ? 17 : 10,
+                SorcererRules.Subclass.ABERRANT,
+                Set.of(),
+                Species.HUMAN,
+                PlayState.defaults().withSheet(sheet),
+                name);
     }
 }

@@ -22,7 +22,17 @@ public final class CharacterChoices {
     private CharacterChoices() {}
 
     public record Choice(
-            String id, String title, String explanation, int count, List<String> options) {
+            String id,
+            String title,
+            String explanation,
+            int count,
+            List<String> options,
+            boolean prerequisitesMet) {
+        public Choice(
+                String id, String title, String explanation, int count, List<String> options) {
+            this(id, title, explanation, count, options, true);
+        }
+
         public Choice {
             options = List.copyOf(options);
         }
@@ -35,7 +45,7 @@ public final class CharacterChoices {
 
         public boolean complete(CharacterSheet sheet) {
             if (id.endsWith(".copies") && sheet.choice(id).isEmpty()) return true;
-            return accepts(sheet.choice(id));
+            return prerequisitesMet && accepts(sheet.choice(id));
         }
     }
 
@@ -300,7 +310,49 @@ public final class CharacterChoices {
 
     public static List<Choice> required(CharacterSheet sheet, Species species, Set<String> feats) {
         List<Choice> list = new ArrayList<>();
-        list.add(SORCERER_SKILLS);
+        if (ClassProgression.classId(sheet) == ClassId.FIGHTER) {
+            int level =
+                    ClassProgression.decode(sheet.choice("class.progression").getFirst()).level();
+            list.add(
+                    new Choice(
+                            "fighter.skills",
+                            "Fighter · Skill proficiencies",
+                            "Choose two class skills.",
+                            2,
+                            ClassDefinition.forClass(ClassId.FIGHTER).skills()));
+            var styles =
+                    FeatCatalog.all().stream()
+                            .filter(f -> f.category() == FeatCatalog.Category.FIGHTING_STYLE)
+                            .map(FeatCatalog.Feat::name)
+                            .toList();
+            list.add(
+                    new Choice(
+                            "fighter.style",
+                            "Fighter · Fighting Style",
+                            "Choose a Fighting Style feat.",
+                            1,
+                            styles));
+            if (level >= 7)
+                list.add(
+                        new Choice(
+                                "fighter.style.extra",
+                                "Champion · Additional Fighting Style",
+                                "Choose a different Fighting Style.",
+                                1,
+                                styles.stream()
+                                        .filter(s -> !sheet.choice("fighter.style").contains(s))
+                                        .toList()));
+            list.add(
+                    new Choice(
+                            "fighter.mastery",
+                            "Fighter · Weapon Mastery",
+                            "Choose weapons whose mastery properties you can use.",
+                            FighterRules.masteryCount(level),
+                            EquipmentRules.weapons().stream()
+                                    .filter(weapon -> !weapon.properties().contains("Unarmed"))
+                                    .map(EquipmentRules.Weapon::name)
+                                    .toList()));
+        } else list.add(SORCERER_SKILLS);
         list.addAll(speciesChoices(species));
         if (species == Species.HUMAN) {
             String backgroundFeat =
@@ -325,7 +377,13 @@ public final class CharacterChoices {
                             allowed));
         }
         Set<String> chosen = new HashSet<>(feats);
-        if (species == Species.HUMAN) chosen.addAll(sheet.choice(ChoiceIds.HUMAN_FEAT));
+        if (species == Species.HUMAN) {
+            for (String name : sheet.choice(ChoiceIds.HUMAN_FEAT)) {
+                if (scopedHumanFeat(sheet, name))
+                    addFeatChoices(list, sheet, name, "human.feat." + name, "", "Human · ");
+                else chosen.add(name);
+            }
+        }
         for (String feat : chosen) addFeatChoices(list, sheet, feat, ChoiceIds.feat(feat), "", "");
         for (String feat : chosen) {
             list.addAll(FeatEffects.configuredChoices(sheet, feat, 1));
@@ -366,10 +424,37 @@ public final class CharacterChoices {
                             1,
                             eligible));
         }
-        if (chosen.contains("Keen Mind")) list.add(KEEN_MIND);
-        if (chosen.contains("Observant")) list.add(OBSERVANT);
+        if (chosen.contains("Keen Mind")) list.add(upgradeChoice(KEEN_MIND, sheet, species, feats));
+        if (chosen.contains("Observant")) list.add(upgradeChoice(OBSERVANT, sheet, species, feats));
         BackgroundCatalog.selected(sheet)
                 .ifPresent(background -> list.addAll(backgroundChoices(background, sheet)));
+        if (species == Species.HUMAN
+                && scopedHumanFeat(sheet, "Magic Initiate")
+                && sheet.choice(ChoiceIds.HUMAN_FEAT).contains("Magic Initiate")) {
+            var lists =
+                    list.stream()
+                            .filter(
+                                    choice ->
+                                            choice.id().contains("Magic Initiate")
+                                                    && choice.id().endsWith(".list"))
+                            .toList();
+            list.replaceAll(
+                    choice -> {
+                        if (!lists.contains(choice)) return choice;
+                        Set<String> other = new HashSet<>();
+                        lists.stream()
+                                .filter(item -> !item.id().equals(choice.id()))
+                                .forEach(item -> other.addAll(sheet.choice(item.id())));
+                        return new Choice(
+                                choice.id(),
+                                choice.title(),
+                                choice.explanation(),
+                                choice.count(),
+                                choice.options().stream()
+                                        .filter(option -> !other.contains(option))
+                                        .toList());
+                    });
+        }
         return List.copyOf(list);
     }
 
@@ -450,6 +535,29 @@ public final class CharacterChoices {
         }
     }
 
+    private static Choice upgradeChoice(
+            Choice choice, CharacterSheet sheet, Species species, Set<String> feats) {
+        Set<Skill> granted = skills(sheet, species, feats);
+        boolean ready =
+                !sheet.choice(choice.id() + ".tier").contains("Expertise")
+                        || Arrays.stream(Skill.values())
+                                .anyMatch(
+                                        skill ->
+                                                sheet.choice(choice.id()).contains(skill.label)
+                                                        && (sheet.tier(skill) > 0
+                                                                || granted.contains(skill)));
+        return new Choice(
+                choice.id(),
+                choice.title(),
+                ready
+                        ? choice.explanation()
+                        : "The proficiency that enabled this expertise was removed. Confirm a skill"
+                                + " again to gain proficiency or upgrade an existing proficiency.",
+                choice.count(),
+                choice.options(),
+                ready);
+    }
+
     public static List<Choice> initiateChoices(
             CharacterSheet sheet, String prefix, String fixedList) {
         List<Choice> result = new ArrayList<>();
@@ -473,8 +581,11 @@ public final class CharacterChoices {
                 new Choice(
                         prefix + ".abilities",
                         background.name() + " · Ability increases",
-                        "Record +2/+1 or +1 to all three. Enter final ability scores on your sheet;"
-                                + " this selection does not add the increases again.",
+                        sheet.field(CharacterSheet.Field.AUTOMATIC_BACKGROUND_ABILITIES) == 1
+                                ? "Choose +2/+1 or +1 to all three. Applied automatically while"
+                                        + " this background is selected; base scores are preserved."
+                                : "Legacy scores include background increases. This selection"
+                                        + " records the allocation without adding it again.",
                         1,
                         allocations));
         List<String> tools =
@@ -521,6 +632,56 @@ public final class CharacterChoices {
     }
 
     public static void validateStored(String id, String value) {
+        if (id.equals("human.feat.scoped")) {
+            if (!value.isEmpty() && !Set.of("Skilled", "Magic Initiate").contains(value))
+                throw new IllegalArgumentException("Invalid scoped Human feat.");
+            return;
+        }
+        if (id.startsWith("human.feat.Skilled") || id.startsWith("human.feat.Magic Initiate")) {
+            validateStored(id.substring(6), value);
+            return;
+        }
+        if (id.equals("class.progression")) {
+            if (!value.isEmpty()) ClassProgression.decode(value);
+            return;
+        }
+        if (id.equals("fighter.skills")) {
+            if (!value.isEmpty()
+                    && !new Choice(
+                                    id,
+                                    "",
+                                    "",
+                                    2,
+                                    ClassDefinition.forClass(ClassId.FIGHTER).skills())
+                            .accepts(List.of(value.split("\\|"))))
+                throw new IllegalArgumentException("Choose two Fighter skills.");
+            return;
+        }
+        if (id.startsWith("fighter.style")) {
+            if (!Set.of("fighter.style", "fighter.style.extra").contains(id))
+                throw new IllegalArgumentException("Invalid style choice.");
+            if (!value.isEmpty()
+                    && FeatCatalog.all().stream()
+                            .noneMatch(
+                                    f ->
+                                            f.name().equals(value)
+                                                    && f.category()
+                                                            == FeatCatalog.Category.FIGHTING_STYLE))
+                throw new IllegalArgumentException("Choose a Fighting Style.");
+            return;
+        }
+        if (id.equals("fighter.mastery")) {
+            var names = value.isEmpty() ? List.<String>of() : List.of(value.split("\\|"));
+            if (names.size() > 6
+                    || new HashSet<>(names).size() != names.size()
+                    || names.stream()
+                            .anyMatch(
+                                    n ->
+                                            EquipmentRules.weapons().stream()
+                                                    .noneMatch(w -> w.name().equals(n))))
+                throw new IllegalArgumentException("Invalid mastery choices.");
+            return;
+        }
         for (var feat : FeatCatalog.all()) {
             String prefix = "feat." + feat.name();
             if (!feat.repeatable()) continue;
@@ -663,8 +824,16 @@ public final class CharacterChoices {
         return Map.copyOf(result);
     }
 
+    public static boolean scopedHumanFeat(CharacterSheet sheet, String name) {
+        return sheet.choice("human.feat.scoped").contains(name);
+    }
+
     public static Set<Skill> skills(CharacterSheet sheet, Species species, Set<String> feats) {
         Set<Skill> result = EnumSet.noneOf(Skill.class);
+        boolean fighter = ClassProgression.classId(sheet) == ClassId.FIGHTER;
+        if (fighter)
+            for (Skill skill : Skill.values())
+                if (sheet.choice("fighter.skills").contains(skill.label)) result.add(skill);
         if (feats.contains("Boon of Skill")) result.addAll(Arrays.asList(Skill.values()));
         Set<String> active = new HashSet<>(feats);
         if (active.contains("Skilled"))
@@ -672,9 +841,19 @@ public final class CharacterChoices {
                 for (Skill skill : Skill.values())
                     if (sheet.choice(FeatEffects.prefix("Skilled", copy)).contains(skill.label))
                         result.add(skill);
-        if (species == Species.HUMAN) active.addAll(sheet.choice(ChoiceIds.HUMAN_FEAT));
+        if (species == Species.HUMAN) {
+            for (String name : sheet.choice(ChoiceIds.HUMAN_FEAT)) {
+                if (scopedHumanFeat(sheet, name)) {
+                    if (name.equals("Skilled"))
+                        for (Skill skill : Skill.values())
+                            if (sheet.choice("human.feat.Skilled").contains(skill.label))
+                                result.add(skill);
+                } else active.add(name);
+            }
+        }
         for (Choice choice : List.of(SORCERER_SKILLS, HUMAN_SKILL, ELF_SKILL, SKILLED)) {
-            if (choice == HUMAN_SKILL && species != Species.HUMAN
+            if (choice == SORCERER_SKILLS && fighter
+                    || choice == HUMAN_SKILL && species != Species.HUMAN
                     || choice == ELF_SKILL && !elf(species)
                     || choice == SKILLED && !active.contains("Skilled")) continue;
             if (choice.complete(sheet))
@@ -696,7 +875,10 @@ public final class CharacterChoices {
                     choice == SKILL_EXPERT
                             ? "Skill Expert"
                             : choice == KEEN_MIND ? "Keen Mind" : "Observant";
-            if (active.contains(feat) && choice.complete(sheet))
+            if (active.contains(feat)
+                    && choice.complete(sheet)
+                    && (choice == SKILL_EXPERT
+                            || !sheet.choice(choice.id() + ".tier").contains("Expertise")))
                 for (Skill skill : Skill.values())
                     if (sheet.choice(choice.id()).contains(skill.label)) result.add(skill);
         }
@@ -717,7 +899,9 @@ public final class CharacterChoices {
             if (feats.contains(choice == KEEN_MIND ? "Keen Mind" : "Observant")
                     && sheet.choice(choice.id() + ".tier").contains("Expertise"))
                 for (Skill skill : Skill.values())
-                    if (sheet.choice(choice.id()).contains(skill.label)) result.add(skill);
+                    if (sheet.choice(choice.id()).contains(skill.label)
+                            && (granted.contains(skill) || sheet.tier(skill) > 0))
+                        result.add(skill);
         return Set.copyOf(result);
     }
 

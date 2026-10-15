@@ -35,6 +35,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -65,6 +66,7 @@ public final class GrimoireChecks {
                         dashboard.dispose();
                     }
                 });
+        if (!GraphicsEnvironment.isHeadless()) scrollNavigation();
         System.out.println(
                 "Passed: dashboard navigation, live annotations, spell filters, casting, dice/log"
                     + " actions, rests, Metamagic, checkpoint restoration, appearance, and empty"
@@ -105,6 +107,98 @@ public final class GrimoireChecks {
         named(dashboard, AbstractButton.class, "nav-" + GrimoirePanel.METAMAGIC).doClick(0);
         check("Metamagic".equals(dashboard.currentPage()), "Sidebar opens Metamagic choices");
         dashboard.showPage("Cast & Combat");
+    }
+
+    private static void scrollNavigation() throws Exception {
+        AtomicReference<GrimoirePanel> workspace = new AtomicReference<>();
+        AtomicReference<JFrame> window = new AtomicReference<>();
+        AtomicReference<JScrollPane> scrolled = new AtomicReference<>();
+        SwingUtilities.invokeAndWait(
+                () -> {
+                    var dashboard =
+                            new GrimoirePanel(
+                                    new CharacterState(
+                                            3,
+                                            17,
+                                            SorcererRules.Subclass.ABERRANT,
+                                            Set.of("Shield"),
+                                            Species.HUMAN));
+                    var frame = new JFrame();
+                    frame.setContentPane(dashboard);
+                    frame.setSize(1100, 700);
+                    frame.setVisible(true);
+                    workspace.set(dashboard);
+                    window.set(frame);
+                });
+        try {
+            for (String page :
+                    new String[] {
+                        GrimoirePanel.FEATS, GrimoirePanel.METAMAGIC, GrimoirePanel.CHARACTER
+                    }) {
+                SwingUtilities.invokeAndWait(
+                        () -> {
+                            workspace.get().showPage(page);
+                            window.get().validate();
+                            layout(workspace.get());
+                            window.get().validate();
+                            layout(workspace.get());
+                        });
+                SwingUtilities.invokeAndWait(
+                        () -> {
+                            Container content =
+                                    (Container)
+                                            ((BorderLayout) workspace.get().getLayout())
+                                                    .getLayoutComponent(BorderLayout.CENTER);
+                            JScrollPane scroll = scrollablePage(content);
+                            check(scroll != null, "Test page has scrollable content: " + page);
+                            check(
+                                    scroll.getViewport().getViewPosition().y == 0,
+                                    "Page initially opens at top: " + page);
+                            int bottom =
+                                    scroll.getVerticalScrollBar().getMaximum()
+                                            - scroll.getVerticalScrollBar().getVisibleAmount();
+                            scroll.getVerticalScrollBar().setValue(bottom);
+                            check(
+                                    scroll.getViewport().getViewPosition().y > 0,
+                                    "Scrolled below top: " + page);
+                            var position = scroll.getViewport().getViewPosition();
+                            workspace.get().playSession().setRemainingPoints(2);
+                            check(
+                                    scroll.getViewport().getViewPosition().equals(position),
+                                    "Resource updates preserve scroll: " + page);
+                            scrolled.set(scroll);
+                            workspace.get().showPage(GrimoirePanel.COMBAT);
+                            named(workspace.get(), AbstractButton.class, "nav-" + page).doClick(0);
+                            window.get().validate();
+                            layout(workspace.get());
+                        });
+                SwingUtilities.invokeAndWait(
+                        () ->
+                                check(
+                                        scrolled.get().getViewport().getViewPosition().y == 0,
+                                        "Sidebar navigation returns page to top: " + page));
+            }
+        } finally {
+            SwingUtilities.invokeAndWait(
+                    () -> {
+                        window.get().dispose();
+                        workspace.get().dispose();
+                    });
+        }
+    }
+
+    private static JScrollPane scrollablePage(Container root) {
+        for (Component child : root.getComponents()) {
+            if (child instanceof JScrollPane scroll
+                    && scroll.isShowing()
+                    && scroll.getVerticalScrollBar().getMaximum()
+                            > scroll.getVerticalScrollBar().getVisibleAmount()) return scroll;
+            if (child instanceof Container nested) {
+                JScrollPane found = scrollablePage(nested);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private static void casting(GrimoirePanel dashboard) {

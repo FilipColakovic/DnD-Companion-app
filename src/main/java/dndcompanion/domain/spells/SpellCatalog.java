@@ -16,6 +16,10 @@ public final class SpellCatalog {
     private SpellCatalog() {}
 
     public record Spell(String name, int level, boolean sorcererSpell) {
+        public java.util.Set<dndcompanion.domain.character.ClassId> classes() {
+            return SpellProfile.forSpell(this).classes();
+        }
+
         public String levelName() {
             return level == 0 ? "Cantrip" : "Level " + level;
         }

@@ -9,6 +9,36 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Manual selections survive character changes; automatic subclass spells are always derived. */
 public final class SpellSelection {
+    private dndcompanion.domain.character.ClassId classId =
+            dndcompanion.domain.character.ClassId.SORCERER;
+
+    public dndcompanion.domain.character.ClassId classId() {
+        return classId;
+    }
+
+    public dndcompanion.domain.character.ClassProgression progression() {
+        return new dndcompanion.domain.character.ClassProgression(
+                classId,
+                level,
+                classId == dndcompanion.domain.character.ClassId.FIGHTER
+                        ? "CHAMPION"
+                        : subclass.name());
+    }
+
+    public void setCharacter(
+            dndcompanion.domain.character.ClassProgression progression, Species species) {
+        boolean changedClass = classId != progression.classId();
+        classId = progression.classId();
+        int previous = level;
+        setCharacter(
+                progression.level(),
+                classId == dndcompanion.domain.character.ClassId.SORCERER
+                        ? SorcererRules.Subclass.valueOf(progression.subclass())
+                        : SorcererRules.Subclass.ABERRANT,
+                species);
+        if (changedClass && previous == level) changed();
+    }
+
     private final Set<String> choices = new HashSet<>();
     private Set<String> featSpells = Set.of();
 
@@ -98,9 +128,10 @@ public final class SpellSelection {
         return SpellCatalog.all().stream()
                 .filter(
                         spell ->
-                                spell.sorcererSpell()
+                                spell.classes().contains(classId)
                                         || featSpell(spell)
-                                        || SpellCatalog.unlockLevel(spell, subclass) > 0
+                                        || classId == dndcompanion.domain.character.ClassId.SORCERER
+                                                && SpellCatalog.unlockLevel(spell, subclass) > 0
                                         || species.grants().stream()
                                                 .anyMatch(
                                                         grant -> grant.name().equals(spell.name())))
@@ -108,17 +139,26 @@ public final class SpellSelection {
     }
 
     public int maxSpellLevel() {
-        return Math.min(9, (level + 1) / 2);
+        var slots =
+                dndcompanion.domain.character.ClassRules.forClass(classId)
+                        .spellSlots(progression());
+        return java.util.stream.IntStream.range(0, slots.size())
+                .filter(i -> slots.get(i) > 0)
+                .map(i -> i + 1)
+                .max()
+                .orElse(0);
     }
 
     public boolean automatic(SpellCatalog.Spell spell) {
-        return SpellCatalog.alwaysPrepared(spell, level, subclass)
+        return dndcompanion.domain.character.ClassRules.forClass(classId)
+                        .alwaysPrepared(spell, progression())
                 || speciesSpell(spell)
                 || featSpell(spell);
     }
 
     public boolean available(SpellCatalog.Spell spell) {
-        return automatic(spell) || spell.sorcererSpell() && spell.level() <= maxSpellLevel();
+        return automatic(spell)
+                || spell.classes().contains(classId) && spell.level() <= maxSpellLevel();
     }
 
     public boolean selected(SpellCatalog.Spell spell) {
@@ -126,11 +166,15 @@ public final class SpellSelection {
     }
 
     public int limit(boolean cantrip) {
-        var stats = SorcererRules.calculate(level, 17, subclass);
+        var rules = dndcompanion.domain.character.ClassRules.forClass(classId);
         return cantrip
-                ? stats.cantrips()
-                        - (level >= 3 && subclass == SorcererRules.Subclass.ABERRANT ? 1 : 0)
-                : stats.basePreparedSpells();
+                ? rules.cantrips(progression())
+                        - (classId == dndcompanion.domain.character.ClassId.SORCERER
+                                        && level >= 3
+                                        && subclass == SorcererRules.Subclass.ABERRANT
+                                ? 1
+                                : 0)
+                : rules.prepared(progression());
     }
 
     public int chosenCount(boolean cantrip) {

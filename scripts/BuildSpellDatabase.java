@@ -39,6 +39,9 @@ public class BuildSpellDatabase {
         Path temporary = Files.createTempFile(output.getParent(), "spells-build-", ".db");
         try {
             try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + temporary)) {
+                try (Statement pragma = connection.createStatement()) {
+                    pragma.execute("PRAGMA foreign_keys=ON");
+                }
                 connection.setAutoCommit(false);
                 try (Statement schema = connection.createStatement()) {
                     schema.executeUpdate(
@@ -55,13 +58,21 @@ public class BuildSpellDatabase {
                               source TEXT NOT NULL, reference TEXT NOT NULL
                             )
                             """);
-                    schema.executeUpdate("PRAGMA user_version=1");
+                    schema.executeUpdate(
+                            "CREATE TABLE spell_classes (spell_name TEXT NOT NULL REFERENCES"
+                                    + " spells(name), class_id TEXT NOT NULL, PRIMARY"
+                                    + " KEY(spell_name,class_id))");
+                    schema.executeUpdate(
+                            "CREATE TABLE spell_checks (spell_name TEXT PRIMARY KEY REFERENCES"
+                                + " spells(name), attack INTEGER NOT NULL CHECK(attack IN (0,1)),"
+                                + " saves TEXT NOT NULL)");
+                    schema.executeUpdate("PRAGMA user_version=2");
                 }
                 List<String> rows = Files.readAllLines(Path.of(args[0]), StandardCharsets.UTF_8);
                 String expected =
                         "name\tlevel\tsorcerer_spell\tschool\tcasting_time\trange\tcomponents"
-                            + "\tduration\tconcentration\tritual\tdescription\thigher_levels"
-                            + "\tsource\treference";
+                                + "\tduration\tconcentration\tritual\tdescription\thigher_levels"
+                                + "\tsource\treference";
                 if (rows.size() < 2 || !rows.getFirst().equals(expected))
                     throw new IllegalArgumentException(
                             "Expected catalog columns and at least one spell");
@@ -95,6 +106,57 @@ public class BuildSpellDatabase {
                             } else insert.setString(column + 1, value);
                         }
                         insert.executeUpdate();
+                    }
+                }
+                List<String> metadata =
+                        Files.readAllLines(
+                                Path.of(args[0])
+                                        .toAbsolutePath()
+                                        .getParent()
+                                        .resolve("spell-mechanics.tsv"),
+                                StandardCharsets.UTF_8);
+                if (!metadata.getFirst().equals("name\tclasses\tattack\tsaves")
+                        || metadata.size() != rows.size())
+                    throw new IllegalArgumentException(
+                            "Spell metadata must cover every catalog entry");
+                try (var classes =
+                                connection.prepareStatement(
+                                        "INSERT INTO spell_classes VALUES (?,?)");
+                        var checks =
+                                connection.prepareStatement(
+                                        "INSERT INTO spell_checks VALUES (?,?,?)")) {
+                    for (String line : metadata.subList(1, metadata.size())) {
+                        String[] fields = line.split("\t", -1);
+                        if (fields.length != 4
+                                || fields[1].isBlank()
+                                || !Set.of("true", "false").contains(fields[2]))
+                            throw new IllegalArgumentException(
+                                    "Invalid spell metadata row: " + line);
+                        for (String cls : fields[1].split("\\|")) {
+                            if (!Set.of(
+                                            "BARD",
+                                            "CLERIC",
+                                            "DRUID",
+                                            "PALADIN",
+                                            "RANGER",
+                                            "SORCERER",
+                                            "WARLOCK",
+                                            "WIZARD")
+                                    .contains(cls))
+                                throw new IllegalArgumentException("Invalid spell class");
+                            classes.setString(1, fields[0]);
+                            classes.setString(2, cls);
+                            classes.executeUpdate();
+                        }
+                        if (!fields[3].isEmpty())
+                            for (String save : fields[3].split("\\|"))
+                                if (!Set.of("STR", "DEX", "CON", "INT", "WIS", "CHA")
+                                        .contains(save))
+                                    throw new IllegalArgumentException("Invalid save ability");
+                        checks.setString(1, fields[0]);
+                        checks.setBoolean(2, Boolean.parseBoolean(fields[2]));
+                        checks.setString(3, fields[3]);
+                        checks.executeUpdate();
                     }
                 }
                 connection.commit();

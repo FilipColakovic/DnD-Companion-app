@@ -108,7 +108,7 @@ final class FeatCard extends JPanel {
     void refresh(CharacterState state) {
         boolean selected = state.equippedFeats().containsKey(feat.name());
         card.putClientProperty("surfaceRole", "surface");
-        String required = feat.requirements(state.level(), state.charisma());
+        String required = feat.requirements(state.level(), state.charisma(), state.classId());
         status.setText(
                 selected
                         ? "EQUIPPED"

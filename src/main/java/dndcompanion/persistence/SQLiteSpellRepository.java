@@ -31,12 +31,17 @@ public final class SQLiteSpellRepository implements SpellRepository {
                                 "jdbc:sqlite:" + path.toUri() + "?mode=ro&immutable=1");
                 Statement statement = connection.createStatement()) {
             try (ResultSet version = statement.executeQuery("PRAGMA user_version")) {
-                if (!version.next() || version.getInt(1) != 1) {
-                    throw new SQLException("Unsupported spell database schema; expected version 1");
+                if (!version.next() || version.getInt(1) != 2) {
+                    throw new SQLException("Unsupported spell database schema; expected version 2");
                 }
             }
             try (ResultSet rows =
-                    statement.executeQuery("SELECT * FROM spells ORDER BY level, name")) {
+                    statement.executeQuery(
+                            "SELECT spells.*, spell_checks.attack, spell_checks.saves, (SELECT"
+                                + " group_concat(class_id,'|') FROM spell_classes WHERE"
+                                + " spell_name=spells.name) AS classes FROM spells LEFT JOIN"
+                                + " spell_checks ON spell_checks.spell_name=spells.name ORDER BY"
+                                + " spells.level, spells.name")) {
                 while (rows.next()) {
                     String name = required(rows, "name");
                     int level = rows.getInt("level");
@@ -44,6 +49,27 @@ public final class SQLiteSpellRepository implements SpellRepository {
                         throw new SQLException("Invalid spell level: " + name);
                     }
                     boolean sorcerer = flag(rows, "sorcerer_spell");
+                    var classes =
+                            java.util.Arrays.stream(required(rows, "classes").split("\\|"))
+                                    .map(dndcompanion.domain.character.ClassId::valueOf)
+                                    .collect(java.util.stream.Collectors.toSet());
+                    var saves =
+                            text(rows, "saves").isEmpty()
+                                    ? java.util.Set
+                                            .<dndcompanion.domain.character.CharacterSheet.Ability>
+                                                    of()
+                                    : java.util.Arrays.stream(text(rows, "saves").split("\\|"))
+                                            .map(
+                                                    dndcompanion.domain.character.CharacterSheet
+                                                                    .Ability
+                                                            ::valueOf)
+                                            .collect(java.util.stream.Collectors.toSet());
+                    var profile =
+                            new dndcompanion.domain.spells.SpellProfile(
+                                    classes, flag(rows, "attack"), saves);
+                    if (sorcerer
+                            != classes.contains(dndcompanion.domain.character.ClassId.SORCERER))
+                        throw new SQLException("Inconsistent Sorcerer spell membership: " + name);
                     SpellDetails details =
                             new SpellDetails(
                                     required(rows, "school"),
@@ -66,7 +92,8 @@ public final class SQLiteSpellRepository implements SpellRepository {
                         throw new SQLException("Spell reference must be an HTTPS URL: " + name);
                     }
                     if (loaded.putIfAbsent(
-                                    name, new Entry(name, level, sorcerer, details, reference))
+                                    name,
+                                    new Entry(name, level, sorcerer, details, reference, profile))
                             != null) {
                         throw new SQLException("Duplicate spell: " + name);
                     }

@@ -76,6 +76,21 @@ public final class FeatAutomationUiChecks {
                         check(
                                 workspace.combatPanel().selectSpell("Mage Hand"),
                                 "Granted cantrip appears immediately in combat");
+                        JButton shove =
+                                accessible(
+                                        workspace, JButton.class, "Telekinetic Telekinetic shove");
+                        check(!shove.isEnabled(), "Shove button requires Mage Hand cast");
+                        var mageHand =
+                                dndcompanion.domain.spells.SpellCatalog.all().stream()
+                                        .filter(spell -> spell.name().equals("Mage Hand"))
+                                        .findFirst()
+                                        .orElseThrow();
+                        check(
+                                session.castFromSource(mageHand, 0, "Cantrip", Set.of()).isEmpty(),
+                                "Cast granted Mage Hand through combat source");
+                        check(shove.isEnabled(), "Shove button updates after successful cast");
+                        session.shortRest();
+                        check(!shove.isEnabled(), "Shove button locks again after rest");
                         session.equipFeat(FeatCatalog.named("Fey-Touched"), "", 17, true);
                         session.setSheet(
                                 session.sheet()
@@ -140,7 +155,7 @@ public final class FeatAutomationUiChecks {
                                                                     > listBounds.x
                                                                             + listBounds.width,
                                                     "Narrow combat stacks readable columns; normal"
-                                                        + " combat remains side by side");
+                                                            + " combat remains side by side");
                                         }
                                         BufferedImage image =
                                                 new BufferedImage(
@@ -180,6 +195,68 @@ public final class FeatAutomationUiChecks {
                                                 17)
                                         == 17,
                                 "UI feat removal reverses score");
+                        workspace.showPage(GrimoirePanel.CHARACTER);
+                        session.equipFeat(FeatCatalog.named("Skilled"), "", 17, true);
+                        for (String option : List.of("History", "Insight", "Tool: Thieves' Tools"))
+                            accessible(workspace, JCheckBox.class, "feat.Skilled option " + option)
+                                    .doClick(0);
+                        accessible(workspace, JButton.class, "Confirm feat.Skilled").doClick(0);
+                        var history = dndcompanion.domain.character.CharacterSheet.Skill.HISTORY;
+                        accessible(workspace, JButton.class, "Proficiency for History").doClick(0);
+                        check(
+                                session.skillTier(history) == 2
+                                        && session.sheet().tier(history) == 0,
+                                "Actual skill marker records source-dependent expertise");
+                        check(
+                                ((javax.swing.JLabel) named(workspace, "skill-bonus-HISTORY"))
+                                        .getText()
+                                        .equals("+4"),
+                                "Visible skill bonus includes dependent expertise");
+                        session.removeFeat("Skilled");
+                        check(
+                                session.skillTier(history) == 0
+                                        && ((javax.swing.JLabel)
+                                                        named(workspace, "skill-bonus-HISTORY"))
+                                                .getText()
+                                                .equals("+0"),
+                                "Removing feat immediately refreshes visible proficiency and"
+                                        + " bonus");
+                        check(
+                                !session.grantedTools().contains("Thieves' Tools"),
+                                "Actual confirmation's tool grant reverses");
+                        workspace.characterController().selectSpecies(Species.HUMAN);
+                        accessible(workspace, JCheckBox.class, "human.feat option Skilled")
+                                .doClick(0);
+                        accessible(workspace, JButton.class, "Confirm human.feat").doClick(0);
+                        check(
+                                session.sheet()
+                                        .choice("human.feat.scoped")
+                                        .equals(List.of("Skilled")),
+                                "New Human confirmation records a distinct source");
+                        for (String option : List.of("Insight", "Nature", "Tool: Thieves' Tools"))
+                            accessible(
+                                            workspace,
+                                            JCheckBox.class,
+                                            "human.feat.Skilled option " + option)
+                                    .doClick(0);
+                        accessible(workspace, JButton.class, "Confirm human.feat.Skilled")
+                                .doClick(0);
+                        session.acquireFeatCopy(FeatCatalog.named("Skilled"), 17);
+                        session.setSheet(
+                                session.sheet()
+                                        .withChoice(
+                                                "feat.Skilled",
+                                                List.of("History", "Investigation", "Medicine")));
+                        session.removeFeat("Skilled");
+                        check(
+                                session.sheet().choice("human.feat").contains("Skilled")
+                                        && session.skillTier(
+                                                        dndcompanion.domain.character.CharacterSheet
+                                                                .Skill.NATURE)
+                                                == 1
+                                        && session.grantedTools().contains("Thieves' Tools"),
+                                "Actual Human confirmation survives removal of an independently"
+                                        + " acquired copy");
                     } finally {
                         workspace.dispose();
                         frame.dispose();

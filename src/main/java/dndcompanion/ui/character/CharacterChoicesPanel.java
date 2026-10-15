@@ -276,6 +276,10 @@ final class CharacterChoicesPanel extends JPanel {
             error.setText("");
             error.setVisible(false);
             CharacterSheet updated = session.sheet().withChoice(choice.id(), values);
+            if (choice.id().equals(ChoiceIds.HUMAN_FEAT)
+                    && !values.equals(session.sheet().choice(ChoiceIds.HUMAN_FEAT))
+                    && Set.of("Skilled", "Magic Initiate").contains(values.getFirst()))
+                updated = updated.withChoice("human.feat.scoped", values);
             if (choice.id().equals(ChoiceIds.FEAT_KEEN_MIND)
                     || choice.id().equals(ChoiceIds.FEAT_OBSERVANT)) {
                 var skill =

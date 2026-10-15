@@ -260,3 +260,5 @@ The extension includes complete Magic Initiate, Fey/Shadow-Touched and Ritual Ca
 | Power Word Kill | A target with 100 HP or fewer dies; otherwise it takes 12d12 Psychic damage. | Distant, Empowered, Quickened, Subtle |
 | Time Stop | No direct damage. Apply the spell's described effects. | Quickened, Subtle |
 | Wish | Resolve the chosen Wish effect or replicated spell. Stress damage is a consequence of later casting, not Wish's primary damage. | Quickened, Subtle |
+
+The 2026-10-15 class rollout adds explicit class-list membership, attack flags and save abilities in `scripts/data/spell-mechanics.tsv`. The bundled schema-2 catalog keeps these facts separate from prose. `SpellProfile` drives attack/save displays; reviewed ambiguous cases include Enlarge/Reduce, Slow and Synaptic Static. The 219-record catalog remains scoped to supported characters and their grants, rather than claiming complete spell coverage for future classes.

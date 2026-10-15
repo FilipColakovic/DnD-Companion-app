@@ -13,30 +13,6 @@ public final class SpellMechanics {
         return Set.of(value.split("\\|"));
     }
 
-    private static final Set<String> SAVES =
-            names(
-                    "Acid Splash|Arms of Hadar|Banishment|Bigby's"
-                        + " Hand|Blight|Blindness/Deafness|Burning Hands|Calm Emotions|Chain"
-                        + " Lightning|Charm Monster|Charm Person|Circle of Death|Cloudkill|Color"
-                        + " Spray|Command|Cone of Cold|Confusion|Counterspell|Crown of"
-                        + " Madness|Delayed Blast Fireball|Detect Thoughts|Disintegrate|Dissonant"
-                        + " Whispers|Dominate Beast|Dominate Monster|Dominate Person|Dragon's"
-                        + " Breath|Earthquake|Enlarge/Reduce|Evard's Black Tentacles|Eyebite|Faerie"
-                        + " Fire|Fear|Finger of Death|Fire Storm|Fireball|Flaming Sphere|Flesh to"
-                        + " Stone|Friends|Grease|Gust of Wind|Hellish Rebuke|Hold Monster|Hold"
-                        + " Person|Hunger of Hadar|Hypnotic Pattern|Ice Knife|Ice Storm|Incendiary"
-                        + " Cloud|Insect Plague|Levitate|Lightning Bolt|Mass Suggestion|Meteor"
-                        + " Swarm|Mind Sliver|Mind Spike|Otiluke's Freezing Sphere|Phantasmal"
-                        + " Force|Polymorph|Power Word Stun|Prismatic Spray|Ray of"
-                        + " Enfeeblement|Reverse Gravity|Seeming|Shatter|Sleep|Sleet"
-                        + " Storm|Slow|Stinking Cloud|Suggestion|Sunbeam|Sunburst|Synaptic"
-                        + " Static|Telekinesis|Thunderclap|Thunderwave|Vitriolic Sphere|Wall of"
-                        + " Fire|Wall of Stone|Web");
-    private static final Set<String> ATTACKS =
-            names(
-                    "Bigby's Hand|Chill Touch|Chromatic Orb|Fire Bolt|Flame Blade|Ice Knife|Poison"
-                            + " Spray|Ray of Frost|Ray of Sickness|Scorching Ray|Shocking"
-                            + " Grasp|Sorcerous Burst|True Strike|Vampiric Touch|Witch Bolt");
     private static final Set<String> DAMAGE_ROLLS =
             names(
                     "Acid Splash|Arms of Hadar|Bigby's Hand|Blight|Burning Hands|Chain"
@@ -71,33 +47,11 @@ public final class SpellMechanics {
                             + " Person|Invisibility|Jump|Longstrider|Spider Climb");
 
     public static boolean forcesSave(SpellCatalog.Spell spell) {
-        return SAVES.contains(spell.name())
-                || Set.of(
-                                "Animal Friendship",
-                                "Bane",
-                                "Compelled Duel",
-                                "Entangle",
-                                "Ensnaring Strike",
-                                "Inflict Wounds",
-                                "Sacred Flame",
-                                "Sanctuary",
-                                "Searing Smite",
-                                "Toll the Dead",
-                                "Word of Radiance",
-                                "Tasha's Hideous Laughter",
-                                "Vicious Mockery")
-                        .contains(spell.name());
+        return !SpellProfile.forSpell(spell).saves().isEmpty();
     }
 
     public static boolean hasAttack(SpellCatalog.Spell spell) {
-        return ATTACKS.contains(spell.name())
-                || Set.of(
-                                "Eldritch Blast",
-                                "Guiding Bolt",
-                                "Produce Flame",
-                                "Starry Wisp",
-                                "Thorn Whip")
-                        .contains(spell.name());
+        return SpellProfile.forSpell(spell).attack();
     }
 
     public static boolean hasDamageRoll(SpellCatalog.Spell spell) {

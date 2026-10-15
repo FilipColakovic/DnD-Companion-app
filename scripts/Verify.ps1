@@ -42,24 +42,29 @@ try {
     if (Test-Path $resolvedClasses) { Remove-Item -LiteralPath $resolvedClasses -Recurse -Force }
     New-Item -ItemType Directory -Force $classes | Out-Null
     [xml]$pom = Get-Content pom.xml
-    $version = ($pom.project.dependencies.dependency | Where-Object artifactId -eq 'sqlite-jdbc').version
-    $dependency = Join-Path $projectRoot "target/dependency/sqlite-jdbc-$version.jar"
-    if (-not (Test-Path $dependency)) {
+    foreach ($runtime in $pom.project.dependencies.dependency) {
+        if ($runtime.scope -in @('test','provided')) { continue }
+        $version = [string]$runtime.version
+        $artifact = [string]$runtime.artifactId
+        $groupPath = ([string]$runtime.groupId).Replace('.', '/')
+        $dependency = Join-Path $projectRoot "target/dependency/$artifact-$version.jar"
+        if (Test-Path $dependency) { continue }
         New-Item -ItemType Directory -Force (Split-Path $dependency) | Out-Null
-        $cached = Join-Path $env:USERPROFILE ".m2/repository/org/xerial/sqlite-jdbc/$version/sqlite-jdbc-$version.jar"
+        $cached = Join-Path $env:USERPROFILE ".m2/repository/$groupPath/$artifact/$version/$artifact-$version.jar"
         if (Test-Path $cached) { Copy-Item $cached $dependency }
         else {
-            Write-Host "Downloading SQLite JDBC $version..."
-            Invoke-WebRequest "https://repo.maven.apache.org/maven2/org/xerial/sqlite-jdbc/$version/sqlite-jdbc-$version.jar" -OutFile "$dependency.download"
+            Write-Host "Downloading $artifact $version..."
+            Invoke-WebRequest "https://repo.maven.apache.org/maven2/$groupPath/$artifact/$version/$artifact-$version.jar" -OutFile "$dependency.download"
             Move-Item -LiteralPath "$dependency.download" -Destination $dependency
         }
     }
+    $runtimeClasspath = ((@($pom.project.dependencies.dependency | Where-Object { $_.scope -notin @('test','provided') } | ForEach-Object { Join-Path $projectRoot "target/dependency/$($_.artifactId)-$($_.version).jar" })) -join ';')
     $sources = @(Get-ChildItem src/main/java,src/test/java -Recurse -Filter *.java | ForEach-Object FullName)
     Write-Host "Compiling $($sources.Count) sources with $compilerVersion..."
-    & $javac -encoding UTF-8 -cp $dependency -d $classes $sources
+    & $javac -encoding UTF-8 -cp $runtimeClasspath -d $classes $sources
     if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
     Copy-Item src/main/resources/* $classes -Recurse -Force
-    $headlessChecks = @('SorcererChecks','PlayChecks','SpellBookChecks','SpeciesChecks','GrimoireChecks','DamageDiceChecks','SpellRulesChecks','CharacterStoreChecks','SpellRepositoryChecks','CleanupRulesChecks','FeatEffectsChecks')
+    $headlessChecks = @('SorcererChecks','PlayChecks','SpellBookChecks','SpeciesChecks','GrimoireChecks','DamageDiceChecks','SpellRulesChecks','CharacterStoreChecks','SpellRepositoryChecks','CleanupRulesChecks','FeatEffectsChecks','FeatRemovalChecks','FighterChecks','RosterStoreChecks')
     $failed = @()
     $passed = 0
     $skipped = 0
@@ -75,7 +80,7 @@ try {
         }
         Write-Host "RUN  $check"
         $ErrorActionPreference = 'Continue'
-        & $java --enable-native-access=ALL-UNNAMED "-Djava.awt.headless=$($Headless.IsPresent.ToString().ToLowerInvariant())" -cp "$classes;$dependency" $check 2>&1 | Tee-Object -FilePath (Join-Path $output "$($source.BaseName).log")
+        & $java --enable-native-access=ALL-UNNAMED "-Djava.awt.headless=$($Headless.IsPresent.ToString().ToLowerInvariant())" -cp "$classes;$runtimeClasspath" $check 2>&1 | Tee-Object -FilePath (Join-Path $output "$($source.BaseName).log")
         $ErrorActionPreference = 'Stop'
         if ($LASTEXITCODE -eq 0) { Write-Host "PASS $check"; $passed++ }
         else { Write-Host "FAIL $check"; $failed += $check }

@@ -4,6 +4,49 @@ package dndcompanion.domain.character;
 public final class HitPointRules {
     private HitPointRules() {}
 
+    public static Calculation calculate(
+            ClassProgression progression,
+            int constitution,
+            Species species,
+            boolean tough,
+            boolean fortitude) {
+        if (progression.classId() == ClassId.SORCERER)
+            return calculate(
+                    progression.level(),
+                    constitution,
+                    species,
+                    SorcererRules.Subclass.valueOf(progression.subclass()),
+                    tough,
+                    fortitude);
+        int level = progression.level(), modifier = CharacterSheet.modifier(constitution);
+        int first = 10 + modifier,
+                later = Math.max(1, 6 + modifier),
+                base = first + (level - 1) * later;
+        int dwarf = species == Species.DWARF ? level : 0,
+                feat = tough ? 2 * level : 0,
+                boon = fortitude && level >= 19 ? 40 : 0;
+        return new Calculation(
+                base,
+                dwarf,
+                0,
+                feat,
+                boon,
+                base + dwarf + feat + boon,
+                "Fighter: "
+                        + first
+                        + " at level 1 + "
+                        + (level - 1)
+                        + " × "
+                        + later
+                        + " + "
+                        + dwarf
+                        + " Dwarf + "
+                        + feat
+                        + " Tough + "
+                        + boon
+                        + " Fortitude");
+    }
+
     public record Calculation(
             int base,
             int dwarf,

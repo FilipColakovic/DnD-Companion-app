@@ -22,19 +22,21 @@ final class CombatLog extends JPanel {
     CombatLog() {
         super(new BorderLayout());
         setOpaque(false);
-        JPanel card = AppStyle.card(new BorderLayout(0, 10));
+        JPanel card = AppStyle.card(new BorderLayout(0, 8));
+        card.putClientProperty("surfaceRole", "low");
         JPanel title = AppStyle.section(new BorderLayout());
         title.add(TactileStyle.heading("Combat Roll Log", TactileStyle.BLUE), BorderLayout.WEST);
         JPanel logActions = AppStyle.section(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        logActions.add(AppStyle.button("Clear", this::clear));
+        logActions.add(AppStyle.compactButton("Clear", this::clear));
         title.add(logActions, BorderLayout.EAST);
         card.add(title, BorderLayout.NORTH);
-        log.setRows(9);
+        log.setRows(4);
         log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         clear();
         JScrollPane scroll = new JScrollPane(log);
         AppStyle.scrollPane(scroll);
-        scroll.setPreferredSize(new Dimension(360, 190));
+        scroll.setPreferredSize(new Dimension(360, 100));
+        scroll.setBorder(javax.swing.BorderFactory.createLineBorder(AppStyle.LINE, 2));
         card.add(scroll, BorderLayout.CENTER);
         add(card);
     }

@@ -10,6 +10,7 @@ import dndcompanion.ui.common.AppStyle;
 import dndcompanion.ui.common.ArcaneIcon;
 import dndcompanion.ui.common.CharacterSummary;
 import dndcompanion.ui.common.LiveView;
+import dndcompanion.ui.common.ScrollPositions;
 import dndcompanion.ui.common.SidebarIcon;
 import dndcompanion.ui.spells.CastingPanel;
 import dndcompanion.ui.spells.SpellLibraryPanel;
@@ -21,7 +22,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.util.LinkedHashMap;
@@ -87,7 +87,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         JPanel sideTop = AppStyle.section(new BorderLayout(0, 16));
         summary = new CharacterSummary(this::snapshot, playSession());
         sideTop.add(summary, BorderLayout.NORTH);
-        JPanel nav = AppStyle.section(new GridLayout(0, 1, 0, 7));
+        JPanel nav = AppStyle.section(new GridBagLayout());
         addNavigation(
                 nav,
                 COMBAT,
@@ -136,6 +136,10 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         sidebar.add(sideTop, BorderLayout.NORTH);
 
         JPanel bottom = AppStyle.section(new BorderLayout(0, 18));
+        JButton rosterButton =
+                AppStyle.compactButton("← Back to characters", () -> rosterAction.run());
+        rosterButton.setName("back-to-characters");
+        bottom.add(rosterButton, BorderLayout.NORTH);
         JPanel preferences = AppStyle.section(new GridBagLayout());
         AppStyle.roundButton(lock);
         lock.setName("save-lock");
@@ -209,7 +213,13 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         button.setFont(new Font("SansSerif", Font.PLAIN, 14));
         button.setToolTipText(tooltip);
         navigation.put(page, button);
-        panel.add(button);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = panel.getComponentCount();
+        constraints.weightx = 1;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.insets = new Insets(0, 0, 7, 0);
+        panel.add(button, constraints);
     }
 
     public void showPage(String page) {
@@ -218,11 +228,21 @@ public final class GrimoirePanel extends JPanel implements LiveView {
         }
         currentPage = page;
         pageLayout.show(pages, page);
+        if (COMBAT.equals(page)) ScrollPositions.openAtTop(combat);
         if (LIBRARY.equals(page)) library.scrollToTop();
+        if (FEATS.equals(page)) ScrollPositions.openAtTop(feats);
+        if (METAMAGIC.equals(page)) ScrollPositions.openAtTop(metamagic);
+        if (CHARACTER.equals(page)) ScrollPositions.openAtTop(sheetEditor);
         navigation.forEach((title, button) -> button.setSelected(title.equals(page)));
         AppStyle.applyAppearance(this);
         revalidate();
         repaint();
+    }
+
+    private Runnable rosterAction = () -> {};
+
+    public void setRosterAction(Runnable action) {
+        rosterAction = java.util.Objects.requireNonNull(action);
     }
 
     public void refresh() {
@@ -241,6 +261,7 @@ public final class GrimoirePanel extends JPanel implements LiveView {
                     .getAccessibleContext()
                     .setAccessibleDescription(pendingDecisions.getToolTipText());
             summary.refresh();
+            navigation.get(METAMAGIC).setVisible(playSession().sorcerer());
             lock.setSelected(character.isSaveLocked());
             restore.setEnabled(character.isSaveLocked());
             dark.setSelected(state.play().dark());

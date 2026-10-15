@@ -19,7 +19,6 @@ public final class CharacterController implements AutoCloseable {
     private final PropertyChangeSupport changes = new PropertyChangeSupport(this);
     private final Runnable listener = this::stateChanged;
     private CharacterState checkpoint;
-    private int charisma;
     private String name;
     private boolean locked, restoring, closed;
     private Consumer<Boolean> saveLockHandler = value -> {};
@@ -42,7 +41,7 @@ public final class CharacterController implements AutoCloseable {
     public CharacterState snapshot() {
         return new CharacterState(
                 selection.level(),
-                charisma,
+                session.sheet().score(dndcompanion.domain.character.CharacterSheet.Ability.CHA, 17),
                 selection.subclass(),
                 selection.chosenSpells(),
                 selection.species(),
@@ -54,9 +53,8 @@ public final class CharacterController implements AutoCloseable {
         Objects.requireNonNull(state);
         restoring = true;
         try {
-            charisma = state.charisma();
             name = state.name();
-            selection.setCharacter(state.level(), state.subclass(), state.species());
+            selection.setCharacter(state.classes().getFirst(), state.species());
             selection.restoreChoices(state.chosenSpells());
             session.restore(state.play());
             checkpoint = state;
@@ -67,15 +65,24 @@ public final class CharacterController implements AutoCloseable {
     }
 
     public void setLevel(int value) {
+        if (selection.classId() == dndcompanion.domain.character.ClassId.FIGHTER) {
+            session.setSheet(
+                    session.sheet()
+                            .withChoice(
+                                    "class.progression",
+                                    java.util.List.of("FIGHTER:" + value + ":CHAMPION")));
+        }
         selection.setCharacter(value, selection.subclass(), selection.species());
     }
 
     public void setCharismaScore(int value) {
         if (value < RuleLimits.MIN_ABILITY_SCORE || value > RuleLimits.MAX_ABILITY_SCORE)
             throw new IllegalArgumentException("Charisma must be 1–30");
-        if (charisma == value) return;
-        charisma = value;
-        session.characterChanged();
+        if (snapshot().charisma() == value) return;
+        session.setSheet(
+                session.sheet()
+                        .withAbility(
+                                dndcompanion.domain.character.CharacterSheet.Ability.CHA, value));
     }
 
     public void selectSubclass(SorcererRules.Subclass value) {

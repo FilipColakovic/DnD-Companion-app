@@ -9,7 +9,6 @@ import static dndcompanion.ui.spells.SpellLibraryComponents.wrapped;
 import dndcompanion.domain.character.CharacterState;
 import dndcompanion.domain.character.Metamagic;
 import dndcompanion.domain.character.PlaySession;
-import dndcompanion.domain.character.SorcererRules;
 import dndcompanion.domain.spells.SpellCatalog;
 import dndcompanion.domain.spells.SpellDetails;
 import dndcompanion.domain.spells.SpellMechanics;
@@ -123,11 +122,7 @@ final class SpellInspector extends JPanel implements Scrollable {
         set(Spec.DURATION, data.duration(), sameSpell);
         var state = character.get();
         int attack =
-                SorcererRules.calculate(
-                                        session.selection().level(),
-                                        state.charisma(),
-                                        session.selection().subclass())
-                                .proficiencyBonus()
+                dndcompanion.domain.character.ClassRules.proficiency(session.selection().level())
                         + session.spellcastingModifier(spell, state.charisma());
         boolean save = SpellMechanics.forcesSave(spell);
         boolean attackRoll = SpellMechanics.hasAttack(spell);

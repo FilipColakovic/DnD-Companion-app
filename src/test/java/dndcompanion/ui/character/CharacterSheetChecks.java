@@ -45,11 +45,9 @@ public final class CharacterSheetChecks {
         check(
                 data.withAbility(Ability.CON, 1).hitDieHealing(1) == 1,
                 "2024 Hit Die healing has a minimum of 1 HP");
-        try {
-            data.withAbility(Ability.CHA, 18);
-            throw new AssertionError("Duplicate Charisma stored");
-        } catch (IllegalArgumentException expected) {
-        }
+        check(
+                data.withAbility(Ability.CHA, 18).score(Ability.CHA, 10) == 18,
+                "Canonical ability scores include Charisma; legacy fallback remains supported");
         try {
             data.withSkill(Skill.ARCANA, 3);
             throw new AssertionError("Invalid tier accepted");

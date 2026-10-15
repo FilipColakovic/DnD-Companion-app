@@ -1,59 +1,38 @@
-﻿# DnD Companion App
+# DnD Companion App
 
-An offline Java 25 desktop companion for a single PHB 2024 Sorcerer. Built with Swing and SQLite.
+Offline Java 25 desktop companion for PHB 2024 **Sorcerers** and **Fighters / Champion (levels 1–20)**, built with Swing and SQLite.
 
-## Features
-
-- **Cast & Combat:** spell casting, resources, dice rolls, equipment and feat actions.
-- **Spell Library:** search, filters, spell learning and full descriptions.
-- **Metamagic:** select options and view spell compatibility.
-- **Feats:** PHB feats and backgrounds, automatic bonuses and spell grants.
-- **Character:** abilities, skills, HP, equipment and reminders for required choices.
-
-Dark theme and adjustable text sizes are available. Turns, enemy/ally effects and table decisions remain player-managed.
+- **Characters:** create, open, rename, copy, search, campaigns, archive/restore, delete and JSON import/export.
+- **Dashboard:** casting, class resources/actions, dice, equipment, Metamagic, spells, feats, backgrounds and character-choice reminders.
+- Reversible feat benefits, protected saves, dark theme and adjustable text size.
 
 ## Run in VS Code
 
 1. Install **JDK 25** and the **Extension Pack for Java**.
-2. Open the project folder and let VS Code finish importing the Maven project.
-3. Open `src/main/java/dndcompanion/Main.java` and click **Run**, or press **F5** using the **DnD Companion App** launch configuration.
+2. Open this folder and let Maven finish importing.
+3. Open `src/main/java/dndcompanion/Main.java` and click **Run**, or use **F5 → DnD Companion App**.
 
-The main class is `dndcompanion.Main`. The launch configuration uses `--enable-native-access=ALL-UNNAMED` for SQLite.
+Main class: `dndcompanion.Main`. SQLite needs `--enable-native-access=ALL-UNNAMED` (included in the launch configuration).
 
-## Verify and run from PowerShell
+## Verify / run from PowerShell
 
 With JDK 25 on PATH or in `JAVA_HOME`:
 
 ```powershell
 .\scripts\Verify.ps1
-```
-
-To select a JDK explicitly:
-
-```powershell
-.\scripts\Verify.ps1 -JavaHome 'C:\path\to\jdk-25'
-```
-
-Verification compiles the project, resolves SQLite JDBC and runs the checks using disposable databases. Logs and previews go to `target/verification/`. Add `-Headless` to skip desktop checks.
-
-After verification, launch the compiled app:
-
-```powershell
 java --enable-native-access=ALL-UNNAMED -cp 'target/verification/classes;target/dependency/*' dndcompanion.Main
 ```
 
-## Saving
+Verification resolves pinned SQLite/Jackson dependencies and uses disposable databases. Logs/previews stay under `target/`. Pass `-JavaHome 'C:\path\to\jdk-25'` to choose a JDK, or `-Headless` to explicitly skip desktop checks.
 
-Characters save to `data/character.db` when you close the app or use **Commit to grimoire**. **Lock saved character** protects a checkpoint; closing while locked discards experiments. **Restore saved** returns to that checkpoint.
+## Saves
 
-The bundled spell database is separate from your character save. No database server is needed.
+The app opens on **Characters**. Independent saves live in `data/characters.db`; an existing `data/character.db` is imported once and left untouched. Unlocked characters save when switching, exiting or committing. **Lock saved character** protects a checkpoint; locked experiments are discarded on exit or **Back to characters**. **Restore saved** returns to that checkpoint.
 
-## Project files and details
+Copies and JSON imports receive new identities and start unlocked/unarchived. Theme and text size are global preferences. JSON files use this app's format; D&D Beyond sync, accounts, other Fighter subclasses/classes and multiclass gameplay remain deferred. Combat triggers remain player-confirmed.
 
-- `src/main/`: application code and bundled resources.
-- `src/test/`: regression checks.
-- `target/`: generated classes, dependencies, logs and previews.
-- [Architecture](ARCHITECTURE.md)
-- [Character choices](CHARACTER_CHOICES.md)
-- [Feat automation and limits](FEAT_AUTOMATION.md)
-- [Spell rules audit](SPELL_RULES_AUDIT.md) and [data licensing](SPELL_DATA_LICENSE.md)
+## Project details
+
+`src/main/` contains code/resources; `src/test/` contains checks; `target/` is generated output.
+
+[Architecture](ARCHITECTURE.md) · [Character choices](CHARACTER_CHOICES.md) · [Feat automation](FEAT_AUTOMATION.md) · [Spell audit](SPELL_RULES_AUDIT.md) · [Data licensing](SPELL_DATA_LICENSE.md)

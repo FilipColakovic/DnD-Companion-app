@@ -14,6 +14,7 @@ import java.util.Set;
 public final class FeatEffectsChecks {
     public static void main(String[] args) {
         telekinetic();
+        telekineticRequiresMageHand();
         spellSources();
         catalogCoverage();
         resourcesAndEquipment();
@@ -39,6 +40,47 @@ public final class FeatEffectsChecks {
                 .filter(s -> s.name().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Missing feat spell " + name));
+    }
+
+    private static void telekineticRequiresMageHand() {
+        try (var controller = character(4)) {
+            var session = controller.playSession();
+            equip(session, "Telekinetic");
+            session.setSheet(
+                    session.sheet().withChoice("feat.Telekinetic.ability", List.of("CHA")));
+            var shove =
+                    FeatActions.all().stream()
+                            .filter(action -> action.feat().equals("Telekinetic"))
+                            .findFirst()
+                            .orElseThrow();
+            var before = session.snapshot();
+            check(!session.featActionAvailable(shove), "Shove locked before casting Mage Hand");
+            check(
+                    !session.useFeatAction(shove, 17, new Random(1)).error().isEmpty(),
+                    "Domain rejects shove before casting");
+            check(session.snapshot().equals(before), "Rejected shove changes no state");
+            check(
+                    !session.cast(spell("Mage Hand"), 0, false, Set.of(Metamagic.QUICKENED))
+                            .isEmpty(),
+                    "Unselected Metamagic rejects Mage Hand cast");
+            check(!session.featActionAvailable(shove), "Failed cast does not unlock shove");
+            check(session.cast(spell("Mage Hand"), 0, false, Set.of()).isEmpty(), "Cast Mage Hand");
+            check(session.featActionAvailable(shove), "Successful cast unlocks shove");
+            check(
+                    session.useFeatAction(shove, 17, new Random(1)).error().isEmpty(),
+                    "Use unlocked shove");
+            session.shortRest();
+            check(!session.featActionAvailable(shove), "Short Rest requires a new Mage Hand cast");
+            session.castFromSource(spell("Mage Hand"), 0, "Cantrip", Set.of());
+            check(session.featActionAvailable(shove), "Combat casting source unlocks shove");
+            session.longRest();
+            check(!session.featActionAvailable(shove), "Long Rest clears Mage Hand cast");
+            session.cast(spell("Mage Hand"), 0, false, Set.of());
+            session.restore(before);
+            check(
+                    !session.featActionAvailable(shove),
+                    "Restoring character clears casting prerequisite");
+        }
     }
 
     private static void telekinetic() {

@@ -2,7 +2,6 @@ package dndcompanion.ui.common;
 
 import dndcompanion.domain.character.CharacterState;
 import dndcompanion.domain.character.PlaySession;
-import dndcompanion.domain.character.SorcererRules;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -74,12 +73,12 @@ public final class CharacterSummary extends JPanel {
                 "8 + proficiency + Charisma modifier; +1 while Innate Sorcery is active for"
                         + " Sorcerer spells");
         top.add(edit);
-        top.add(tile("SORCERY PTS", points));
+        top.add(tile(session.sorcerer() ? "SORCERY PTS" : "SECOND WIND", points));
         resources.add(top, BorderLayout.NORTH);
         JPanel middle = AppStyle.section(new GridLayout(1, 3, 8, 0));
-        middle.add(tile("SAVE DC", dc));
-        middle.add(tile("SPELL ATK", attack));
-        middle.add(tile("INNATE", innate));
+        middle.add(tile(session.sorcerer() ? "SAVE DC" : "AC", dc));
+        middle.add(tile(session.sorcerer() ? "SPELL ATK" : "ATTACKS", attack));
+        middle.add(tile(session.sorcerer() ? "INNATE" : "SURGE", innate));
         resources.add(middle, BorderLayout.CENTER);
         JPanel matrix = AppStyle.card(new BorderLayout(0, 8));
         matrix.setBorder(new EmptyBorder(10, 10, 14, 14));
@@ -105,6 +104,7 @@ public final class CharacterSummary extends JPanel {
         }
         matrix.add(cells, BorderLayout.CENTER);
         resources.add(matrix, BorderLayout.SOUTH);
+        matrix.setVisible(session.sorcerer());
         add(resources, BorderLayout.CENTER);
         refresh();
     }
@@ -124,21 +124,20 @@ public final class CharacterSummary extends JPanel {
     public void refresh() {
         CharacterState state = character.get();
         var stats =
-                SorcererRules.calculate(
-                        state.level(),
+                session.stats(
                         session.effectiveScore(
                                 dndcompanion.domain.character.CharacterSheet.Ability.CHA,
-                                state.charisma()),
-                        state.subclass());
-        String full = state.name().toUpperCase(Locale.ROOT) + " // SORCERER";
+                                state.charisma()));
+        String full = state.name().toUpperCase(Locale.ROOT) + " // " + state.classId();
         name.setText("<html>" + escape(full) + "</html>");
         name.setToolTipText(full);
         lineage.setText(
                 String.format(
                         "LEVEL %02d // %s",
                         state.level(),
-                        state.subclass()
-                                .toString()
+                        state.classes()
+                                .getFirst()
+                                .subclassLabel()
                                 .replace(" Sorcery", "")
                                 .toUpperCase(Locale.ROOT)));
         hp.setText(
@@ -149,8 +148,21 @@ public final class CharacterSummary extends JPanel {
         dc.setText("" + (stats.spellSaveDc() + (session.innateActive() ? 1 : 0)));
         attack.setText(String.format("%+d", stats.spellAttack()));
         innate.setText(Math.max(0, 2 - state.play().innateUses()) + "/2");
+        if (!session.sorcerer()) {
+            points.setText(
+                    session.resource("fighter.secondWind").remaining()
+                            + "/"
+                            + session.resource("fighter.secondWind").maximum());
+            dc.setText("" + session.armorClass(state.charisma()));
+            dc.setToolTipText("Armor Class from equipment and active benefits");
+            attack.setText("" + dndcompanion.domain.character.FighterRules.attacks(state.level()));
+            innate.setText("" + session.resource("fighter.actionSurge").remaining());
+        }
         innate.setToolTipText(
-                "Free Innate Sorcery uses remaining; additional uses at level 7+ cost 2 SP");
+                session.sorcerer()
+                        ? "Free Innate Sorcery uses remaining; additional uses at level 7+ cost 2"
+                                + " SP"
+                        : "Action Surge uses remaining; recover on a Short or Long Rest");
         for (int i = 0; i < 9; i++) {
             boolean unlocked = session.maxSlots(i + 1) > 0;
             slotCounts[i].setText(
@@ -184,7 +196,7 @@ public final class CharacterSummary extends JPanel {
         fields.add(maximum);
         AppStyle.applyAppearance(fields);
         fields.add(automatic);
-        fields.add(AppStyle.label("Fixed Sorcerer HP + CON", 11, false));
+        fields.add(AppStyle.label("Fixed class HP + CON", 11, false));
         AppStyle.applyAppearance(fields);
         while (JOptionPane.showConfirmDialog(
                         this,

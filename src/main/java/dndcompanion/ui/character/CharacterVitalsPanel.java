@@ -64,7 +64,7 @@ final class CharacterVitalsPanel extends JPanel {
         JPanel basics = new FeatComponents.WrapPanel(7);
         basics.add(
                 labelled(
-                        "AC OVERRIDE (0 = UNARMORED)",
+                        "AC OVERRIDE (0 = AUTO)",
                         bindings.field(Field.AC_OVERRIDE, "Armor class override")));
         basics.add(labelled("SPEED (FEET)", bindings.field(Field.SPEED, "Speed")));
         FeatComponents.row(vitals, basics);
@@ -175,7 +175,13 @@ final class CharacterVitalsPanel extends JPanel {
                                         : 0)));
         proficiency.setText(signed(stats.proficiencyBonus()));
         int remaining = Math.max(0, state.level() - sheet.field(Field.SPENT_HIT_DICE));
-        hitDice.setText("HIT DICE " + remaining + " / " + state.level() + " (d6)");
+        int hitDie =
+                dndcompanion.domain.character.ClassDefinition.forClass(state.classId()).hitDie();
+        hitDice.setText("HIT DICE " + remaining + " / " + state.level() + " (d" + hitDie + ")");
+        spendHitDie.setText("Spend d" + hitDie + " Hit Die");
+        spendHitDie.setToolTipText(
+                "During a Short Rest, spend a class Hit Die and heal by the roll + Constitution"
+                        + " modifier.");
         spendHitDie.setEnabled(
                 remaining > 0
                         && session.hitPoints() > 0
@@ -183,22 +189,12 @@ final class CharacterVitalsPanel extends JPanel {
     }
 
     private void spendHitDie() {
-        CharacterState state = editor.snapshot();
-        CharacterSheet sheet = session.sheet();
-        int spent = sheet.field(Field.SPENT_HIT_DICE);
-        if (spent >= state.level() || session.hitPoints() == 0) return;
-        int die = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 7),
-                healing = session.effectiveSheet().hitDieHealing(die);
-        session.setSheet(sheet.withField(Field.SPENT_HIT_DICE, spent + 1));
-        session.setCurrentHitPoints(
-                Math.min(session.maxHitPoints(), session.hitPoints() + healing));
+        var result =
+                session.spendHitDie(
+                        editor.snapshot().charisma(),
+                        java.util.concurrent.ThreadLocalRandom.current());
         workspace
                 .combatPanel()
-                .recordEvent(
-                        "Short Rest Hit Die: d6 ["
-                                + die
-                                + "] + CON = "
-                                + healing
-                                + " HP (limited by maximum HP)");
+                .recordEvent(result.error().isEmpty() ? result.event() : result.error());
     }
 }

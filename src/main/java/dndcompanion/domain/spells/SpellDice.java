@@ -78,7 +78,7 @@ public final class SpellDice {
                             + " modifier check.";
             case "Cure Wounds", "Healing Word" ->
                     "Roll healing with the selected spellcasting ability; Healer rerolls each"
-                        + " initial 1 once.";
+                            + " initial 1 once.";
             default -> SpellMechanics.damageNote(spell);
         };
     }

@@ -262,6 +262,21 @@ public final class FeatEffects {
     public static int score(
             CharacterSheet sheet, Set<String> feats, Ability ability, int charisma) {
         int base = sheet.score(ability, charisma), normal = 0, epic = 0;
+        if (sheet.field(CharacterSheet.Field.AUTOMATIC_BACKGROUND_ABILITIES) == 1) {
+            var background = BackgroundCatalog.selected(sheet);
+            if (background.isPresent()) {
+                String allocation =
+                        sheet.choice(background.get().id() + ".abilities").stream()
+                                .findFirst()
+                                .orElse("");
+                var choice = CharacterChoices.backgroundChoices(background.get(), sheet).getFirst();
+                if (choice.complete(sheet))
+                    normal +=
+                            allocation.contains(ability + " +2")
+                                    ? 2
+                                    : allocation.contains(ability + " +1") ? 1 : 0;
+            }
+        }
         for (String name : feats) {
             var feat = FeatCatalog.named(name);
             List<Ability> allowed = abilities(feat);
@@ -340,11 +355,32 @@ public final class FeatEffects {
                 default -> {}
             }
         }
+        Set<String> invalidLists =
+                !manual.contains("Magic Initiate")
+                                && !(species == Species.HUMAN
+                                        && sheet.choice(ChoiceIds.HUMAN_FEAT)
+                                                .contains("Magic Initiate"))
+                        ? Set.of()
+                        : CharacterChoices.required(sheet, species, manual).stream()
+                                .filter(
+                                        choice ->
+                                                choice.id().contains("Magic Initiate")
+                                                        && choice.id().endsWith(".list")
+                                                        && !choice.complete(sheet))
+                                .map(choice -> choice.id().substring(0, choice.id().length() - 5))
+                                .collect(java.util.stream.Collectors.toSet());
         if (manual.contains("Magic Initiate")
                 || species == Species.HUMAN
+                        && !CharacterChoices.scopedHumanFeat(sheet, "Magic Initiate")
                         && sheet.choice(ChoiceIds.HUMAN_FEAT).contains("Magic Initiate"))
             for (int copy = 1; copy <= copies(sheet, "Magic Initiate"); copy++)
-                initiate(result, sheet, prefix("Magic Initiate", copy), "");
+                if (!invalidLists.contains(prefix("Magic Initiate", copy)))
+                    initiate(result, sheet, prefix("Magic Initiate", copy), "");
+        if (species == Species.HUMAN
+                && sheet.choice(ChoiceIds.HUMAN_FEAT).contains("Magic Initiate")
+                && CharacterChoices.scopedHumanFeat(sheet, "Magic Initiate")
+                && !invalidLists.contains("human.feat.Magic Initiate"))
+            initiate(result, sheet, "human.feat.Magic Initiate", "");
         BackgroundCatalog.selected(sheet)
                 .filter(b -> b.feat().equals("Magic Initiate"))
                 .ifPresent(

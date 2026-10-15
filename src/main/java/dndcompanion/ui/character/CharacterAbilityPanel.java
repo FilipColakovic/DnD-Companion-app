@@ -45,7 +45,11 @@ final class CharacterAbilityPanel extends JPanel {
             JPanel tile =
                     AppStyle.surfacePanel(
                             new BorderLayout(0, 5),
-                            ability == Ability.CHA ? "slotAvailable" : "low");
+                            (session.sorcerer()
+                                            ? ability == Ability.CHA
+                                            : ability == Ability.STR || ability == Ability.DEX)
+                                    ? "slotAvailable"
+                                    : "low");
             tile.setBorder(
                     BorderFactory.createCompoundBorder(
                             BorderFactory.createLineBorder(AppStyle.LINE),
@@ -77,7 +81,7 @@ final class CharacterAbilityPanel extends JPanel {
             matrix.add(tile);
         }
         FeatComponents.row(attributes, matrix);
-        FeatComponents.row(attributes, metric("SORCERER SPELL SAVE DC", dc));
+        if (session.sorcerer()) FeatComponents.row(attributes, metric("SPELL SAVE DC", dc));
         add(attributes);
     }
 
@@ -106,7 +110,9 @@ final class CharacterAbilityPanel extends JPanel {
                                     + (trained ? " P" : ""));
             saves.get(ability)
                     .setToolTipText(
-                            trained ? "Sorcerer saving throw proficiency" : "Ability modifier");
+                            trained
+                                    ? state.classId().label() + " / feat saving throw proficiency"
+                                    : "Ability modifier");
         }
     }
 }

@@ -10,8 +10,9 @@ import javax.swing.Scrollable;
 
 final class CombatArsenalGrid extends JPanel implements Scrollable {
     CombatArsenalGrid() {
-        super(new GridLayout(0, 1, 8, 8));
+        super(new GridLayout(0, 1, 6, 6));
         setOpaque(false);
+        setName("combat-arsenal-grid");
     }
 
     private void columns(int width) {

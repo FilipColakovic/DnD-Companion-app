@@ -57,6 +57,13 @@ final class CharacterIdentityPanel extends JPanel {
                 new PillSelector<>(List.of(Species.values()), Species.HUMAN, editor::selectSpecies);
         species.getAccessibleContext().setAccessibleName("Select PHB 2024 species and lineage");
         origin.add(labelled("SUBCLASS", subclass));
+        if (!session.sorcerer()) {
+            origin.remove(origin.getComponentCount() - 1);
+            origin.add(
+                    labelled(
+                            "CLASS / SUBCLASS",
+                            AppStyle.label("Fighter / Champion (level 3+)", 13, true)));
+        }
         origin.add(labelled("SPECIES & LINEAGE", species));
         level = bindings.spinner("Character level", 1, 1, 20, value -> editor.setLevel(value));
         origin.add(labelled("CLASS LEVEL", level));

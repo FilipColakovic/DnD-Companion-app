@@ -92,7 +92,11 @@ final class CharacterTrainingPanel extends JPanel {
             CharacterSheet sheet,
             SorcererRules.Stats stats,
             boolean restored) {
-        text(training, sheet.note(Note.TRAINING));
+        text(
+                training,
+                !session.sorcerer() && !sheet.values().containsKey("note.TRAINING")
+                        ? "Simple and martial weapons; all armor and shields"
+                        : sheet.note(Note.TRAINING));
         text(languages, sheet.note(Note.LANGUAGES));
         equipment.forEach(
                 (id, selector) ->

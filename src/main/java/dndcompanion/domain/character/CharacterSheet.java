@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Additional single-Sorcerer sheet inputs. Charisma, level and HP retain their existing storage.
- */
+/** Canonical base ability scores, manual inputs and source-scoped configuration. */
 public record CharacterSheet(Map<String, String> values) {
     public enum Ability {
         STR,
@@ -56,6 +54,7 @@ public record CharacterSheet(Map<String, String> values) {
         DEATH_FAILURES(0, 3, 0),
         INSPIRATION(0, 1, 0),
         AUTOMATIC_HP(0, 1, 1),
+        AUTOMATIC_BACKGROUND_ABILITIES(0, 1, 0),
         HP_DAMAGE(0, 9999, 0),
         HP_ZERO(0, 1, 0);
         public final int minimum, maximum, initial;
@@ -88,9 +87,10 @@ public record CharacterSheet(Map<String, String> values) {
     private static void validate(String key, String value) {
         if (key.startsWith("ability.")) {
             Ability ability = Ability.valueOf(key.substring(8));
-            if (ability == Ability.CHA)
-                throw new IllegalArgumentException("Charisma is stored with the character");
             range(Integer.parseInt(value), 1, 30);
+        } else if (key.startsWith("upgrade.")) {
+            Skill.valueOf(key.substring(8));
+            if (value.length() > 2000) throw new IllegalArgumentException("Invalid skill sources");
         } else if (key.startsWith("skill.")) {
             Skill.valueOf(key.substring(6));
             range(Integer.parseInt(value), 0, 2);
@@ -125,6 +125,15 @@ public record CharacterSheet(Map<String, String> values) {
         return put("skill." + skill, Integer.toString(tier));
     }
 
+    public CharacterSheet withSkillUpgrade(Skill skill, Set<String> sources) {
+        return put("upgrade." + skill, String.join("|", sources.stream().sorted().toList()));
+    }
+
+    public Set<String> skillUpgrade(Skill skill) {
+        String value = values.getOrDefault("upgrade." + skill, "");
+        return value.isEmpty() ? Set.of() : Set.of(value.split("\\|"));
+    }
+
     public CharacterSheet withSkill(Skill skill, Proficiency proficiency) {
         return withSkill(skill, proficiency.storedValue());
     }
@@ -151,9 +160,10 @@ public record CharacterSheet(Map<String, String> values) {
     }
 
     public int score(Ability ability, int charisma) {
-        return ability == Ability.CHA
-                ? charisma
-                : Integer.parseInt(values.getOrDefault("ability." + ability, "10"));
+        return Integer.parseInt(
+                values.getOrDefault(
+                        "ability." + ability,
+                        ability == Ability.CHA ? Integer.toString(charisma) : "10"));
     }
 
     public int tier(Skill skill) {

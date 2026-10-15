@@ -21,13 +21,13 @@ final class FeatListModel {
 
     static Group group(FeatCatalog.Feat feat, CharacterState state) {
         if (state.equippedFeats().containsKey(feat.name())) return Group.EQUIPPED;
-        return feat.requirements(state.level(), state.charisma()).isEmpty()
+        return feat.requirements(state.level(), state.charisma(), state.classId()).isEmpty()
                 ? Group.AVAILABLE
                 : Group.LOCKED;
     }
 
     static String status(FeatCatalog.Feat feat, CharacterState state) {
-        String requirement = feat.requirements(state.level(), state.charisma());
+        String requirement = feat.requirements(state.level(), state.charisma(), state.classId());
         boolean recorded = state.equippedFeats().containsKey(feat.name());
         if (!requirement.isEmpty()) return (recorded ? "Recorded · " : "Locked · ") + requirement;
         if (recorded) return "Equipped";

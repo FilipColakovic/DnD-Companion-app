@@ -16,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Shared live resource model. Failed casts validate fully before spending anything. */
 public final class PlaySession {
+    private boolean mageHandCast;
     private final SpellSelection selection;
     private final Runnable selectionListener = this::selectionChanged;
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
@@ -32,10 +33,9 @@ public final class PlaySession {
     public HitPointRules.Calculation hpCalculation() {
         var selected = feats();
         return HitPointRules.calculate(
-                selection.level(),
+                selection.progression(),
                 effectiveScore(CharacterSheet.Ability.CON, 10),
                 selection.species(),
-                selection.subclass(),
                 selected.containsKey("Tough"),
                 selected.containsKey("Boon of Fortitude"));
     }
@@ -123,7 +123,62 @@ public final class PlaySession {
     }
 
     public Map<String, String> feats() {
-        return CharacterChoices.feats(sheet, selection.species(), feats);
+        var result = new HashMap<>(CharacterChoices.feats(sheet, selection.species(), feats));
+        if (!sorcerer()) {
+            for (String style : sheet.choice("fighter.style"))
+                result.putIfAbsent(style, "Fighter · Fighting Style");
+            if (selection.level() >= 7)
+                for (String style : sheet.choice("fighter.style.extra"))
+                    result.putIfAbsent(style, "Champion · Additional Fighting Style");
+        }
+        return Map.copyOf(result);
+    }
+
+    public SorcererRules.Stats stats(int charisma) {
+        return ClassRules.compatibility(selection.progression(), charisma);
+    }
+
+    public boolean sorcerer() {
+        return selection.classId() == ClassId.SORCERER;
+    }
+
+    public List<ResourcePool> resources() {
+        if (!sorcerer()) return ClassResourceRules.fighter(selection.level(), speciesUses);
+        return List.of(
+                new ResourcePool(
+                        "sorcerer.points",
+                        "Sorcery Points",
+                        maxPoints(),
+                        points,
+                        ResourcePool.Recovery.LONG_REST),
+                new ResourcePool(
+                        "sorcerer.innate",
+                        "Innate Sorcery",
+                        2,
+                        innateUses,
+                        ResourcePool.Recovery.LONG_REST));
+    }
+
+    public ResourcePool resource(String id) {
+        return resources().stream().filter(pool -> pool.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    public FeatResult useClassAction(
+            ClassActions.Action action,
+            int charisma,
+            java.util.random.RandomGenerator random,
+            int original,
+            int dc) {
+        var execution = new ClassActionService(this);
+        var result = execution.execute(action, charisma, random, original, dc);
+        if (result.error().isEmpty()) {
+            sheet = execution.sheet;
+            speciesUses.clear();
+            speciesUses.putAll(execution.spent);
+            if (!automaticHp()) hitPoints = execution.hitPoints;
+            changed();
+        }
+        return result;
     }
 
     public List<CharacterChoices.Choice> requiredChoices() {
@@ -190,9 +245,30 @@ public final class PlaySession {
     public CharacterSheet effectiveSheet() {
         CharacterSheet effective = sheet;
         for (var ability : CharacterSheet.Ability.values())
-            if (ability != CharacterSheet.Ability.CHA)
-                effective = effective.withAbility(ability, effectiveScore(ability, 10));
+            effective =
+                    effective.withAbility(
+                            ability,
+                            effectiveScore(ability, sheet.score(CharacterSheet.Ability.CHA, 10)));
+        for (var skill : CharacterSheet.Skill.values())
+            if (dependentExpertise(skill)) effective = effective.withSkill(skill, 2);
         return effective;
+    }
+
+    private boolean dependentExpertise(CharacterSheet.Skill skill) {
+        return sheet.skillUpgrade(skill).stream()
+                .anyMatch(
+                        CharacterGrants.sources(sheet, selection.species(), feats.keySet(), skill)
+                                ::contains);
+    }
+
+    public void setSkillTier(CharacterSheet.Skill skill, int tier) {
+        if (tier == 2 && sheet.tier(skill) == 0 && grantedSkills().contains(skill))
+            setSheet(
+                    sheet.withSkillUpgrade(
+                            skill,
+                            CharacterGrants.sources(
+                                    sheet, selection.species(), feats.keySet(), skill)));
+        else setSheet(sheet.withSkill(skill, tier).withSkillUpgrade(skill, Set.of()));
     }
 
     public int armorClass(int charisma) {
@@ -207,8 +283,7 @@ public final class PlaySession {
     }
 
     public boolean saveProficiency(CharacterSheet.Ability ability) {
-        return ability == CharacterSheet.Ability.CON
-                || ability == CharacterSheet.Ability.CHA
+        return ClassDefinition.forClass(selection.classId()).savingThrows().contains(ability)
                 || feats().containsKey("Resilient")
                         && sheet.choice("feat.Resilient.ability").contains(ability.name());
     }
@@ -245,227 +320,20 @@ public final class PlaySession {
             java.util.random.RandomGenerator random,
             int rerollSides,
             String item) {
-        if (!Set.of(1, 4, 6, 8, 10, 12).contains(rerollSides))
-            return new FeatResult("Choose a valid damage die.", "");
-        if (!FeatActions.all().contains(action) || !feats().containsKey(action.feat()))
-            return new FeatResult("This feat is not equipped.", "");
-        if (remainingFeatUses(action) == 0)
-            return new FeatResult("No uses remain until a rest.", "");
-        String feat = action.feat(), id = action.id();
-        var weapon = EquipmentRules.weapon(sheet);
-        boolean shield = EquipmentRules.shield(sheet);
-        if (feat.equals("Defensive Duelist") && !weapon.properties().contains("Finesse"))
-            return new FeatResult("Equip a Finesse weapon first.", "");
-        if (Set.of("Protection", "Shield Master").contains(feat) && !shield)
-            return new FeatResult("Equip a shield first.", "");
-        if (feat.equals("Polearm Master")
-                && !(Set.of("Quarterstaff", "Spear").contains(weapon.name())
-                        || weapon.properties().contains("Heavy")
-                                && weapon.properties().contains("Reach")))
-            return new FeatResult("Equip an eligible polearm first.", "");
-        if (Set.of("Telekinetic", "Poisoner", "Inspiring Leader", "Boon of Irresistible Offense")
-                        .contains(feat)
-                && requiredChoices().stream()
-                        .anyMatch(
-                                c ->
-                                        c.id().equals("feat." + feat + ".ability")
-                                                && !c.complete(sheet)))
-            return new FeatResult("Choose this feat's ability increase in Character first.", "");
-        int pb = 2 + (selection.level() - 1) / 4;
-        int modifier =
-                CharacterSheet.modifier(effectiveScore(FeatEffects.ability(sheet, feat), charisma));
-        String effect = action.trigger();
-        if (feat.equals("Crafter")) {
-            if (!FeatActions.craftingItems(grantedTools()).contains(item))
-                return new FeatResult("Choose gear supported by your proficient tools.", "");
-            sheet = sheet.withNote(CharacterSheet.Note.CRAFTED_ITEM, item);
-            effect = "Crafted " + item + "; expires at your next Long Rest.";
+        var execution = new FeatActionService(this);
+        var result = execution.execute(action, charisma, random, rerollSides, item);
+        if (result.error().isEmpty()) {
+            sheet = execution.sheet;
+            speciesUses.clear();
+            speciesUses.putAll(execution.speciesUses);
+            if (!automaticHp()) hitPoints = execution.hitPoints();
+            changed();
         }
-        int healing = 0;
-        if (feat.equals("Durable") || feat.equals("Healer")) {
-            if (feat.equals("Healer") && sheet.field(CharacterSheet.Field.HEALER_KIT_USES) == 0)
-                return new FeatResult("Add available Healer's Kit uses in Character first.", "");
-            if (sheet.field(CharacterSheet.Field.SPENT_HIT_DICE) >= selection.level()
-                    || hitPoints() <= 0)
-                return new FeatResult("No available Hit Dice, or character is at zero HP.", "");
-            int die = random.nextInt(1, 7);
-            if (feat.equals("Healer") && die == 1) die = random.nextInt(1, 7);
-            healing = die + (feat.equals("Healer") ? pb : 0);
-            sheet =
-                    sheet.withField(
-                            CharacterSheet.Field.SPENT_HIT_DICE,
-                            sheet.field(CharacterSheet.Field.SPENT_HIT_DICE) + 1);
-            if (feat.equals("Healer"))
-                sheet =
-                        sheet.withField(
-                                CharacterSheet.Field.HEALER_KIT_USES,
-                                sheet.field(CharacterSheet.Field.HEALER_KIT_USES) - 1);
-            effect =
-                    "d6 ["
-                            + die
-                            + "]"
-                            + (feat.equals("Healer") ? " + PB " + pb : "")
-                            + " = "
-                            + healing
-                            + " healing";
-        } else if (feat.equals("Boon of Recovery")) {
-            healing = id.equals("recover") ? random.nextInt(1, 11) : 0;
-            if (id.equals("laststand"))
-                setHpWithoutNotification(Math.min(maxHitPoints(), 1 + maxHitPoints() / 2));
-            effect =
-                    id.equals("recover")
-                            ? "d10 healing " + healing
-                            : "Last Stand: HP " + hitPoints();
-        } else if (feat.equals("Chef")) {
-            if (id.equals("meal")) healing = random.nextInt(1, 9);
-            else if (id.equals("cook")) {
-                speciesUses.put("feat-stock:Chef", pb);
-                effect =
-                        "Prepared "
-                                + pb
-                                + " treats; each grants "
-                                + pb
-                                + " temporary HP, expires after 8 hours.";
-            } else {
-                int stock = speciesUses.getOrDefault("feat-stock:Chef", 0);
-                if (stock == 0) return new FeatResult("Prepare treats first.", "");
-                speciesUses.put("feat-stock:Chef", stock - 1);
-                sheet =
-                        sheet.withField(
-                                CharacterSheet.Field.TEMP_HP,
-                                Math.max(sheet.field(CharacterSheet.Field.TEMP_HP), pb));
-                effect = "Temporary HP " + pb + "; " + (stock - 1) + " treats remain.";
-            }
-        } else if (feat.equals("Inspiring Leader")) {
-            int temporary = Math.max(0, selection.level() + modifier);
-            sheet =
-                    sheet.withField(
-                            CharacterSheet.Field.TEMP_HP,
-                            Math.max(sheet.field(CharacterSheet.Field.TEMP_HP), temporary));
-            effect =
-                    temporary
-                            + " temporary HP for up to six witnesses within 30 feet (including"
-                            + " self).";
-        } else if (feat.equals("Poisoner")) {
-            if (id.equals("brew")) {
-                speciesUses.merge("feat-stock:Poisoner", pb, Integer::sum);
-                effect = "Brewed " + pb + " doses; expend 50 GP and one hour.";
-            } else {
-                int stock = speciesUses.getOrDefault("feat-stock:Poisoner", 0);
-                if (stock == 0) return new FeatResult("Brew poison doses first.", "");
-                speciesUses.put("feat-stock:Poisoner", stock - 1);
-                effect =
-                        "CON DC "
-                                + (8 + pb + modifier)
-                                + "; failure: "
-                                + roll(random, 2, 8)
-                                + " Poison damage and Poisoned until end of your next turn; ignores"
-                                + " resistance.";
-            }
-        } else if (feat.equals("Telekinetic"))
-            effect =
-                    "STR DC "
-                            + (8 + pb + modifier)
-                            + "; failure: move 5 feet toward or away; willing target may fail.";
-        else if (feat.equals("Actor"))
-            effect =
-                    "Mimicry Insight DC "
-                            + (8 + pb + modifier)
-                            + "; disguised impersonation checks have advantage.";
-        else if (feat.equals("Boon of Energy Resistance"))
-            effect =
-                    "DEX DC "
-                            + (8
-                                    + pb
-                                    + CharacterSheet.modifier(
-                                            effectiveScore(CharacterSheet.Ability.CON, charisma)))
-                            + "; failure: "
-                            + (roll(random, 2, 12)
-                                    + CharacterSheet.modifier(
-                                            effectiveScore(CharacterSheet.Ability.CON, charisma)))
-                            + " damage of resisted type.";
-        else if (feat.equals("Boon of Fate"))
-            effect = "Add or subtract " + roll(random, 2, 4) + " from nearby D20 Test.";
-        else if (feat.equals("Boon of Fortitude"))
-            healing =
-                    Math.max(
-                            0,
-                            CharacterSheet.modifier(
-                                    effectiveScore(CharacterSheet.Ability.CON, charisma)));
-        else if (feat.equals("Boon of Irresistible Offense"))
-            effect =
-                    "Natural 20: extra "
-                            + effectiveScore(FeatEffects.ability(sheet, feat), charisma)
-                            + " damage of the attack's type.";
-        else if (feat.equals("Charger") && id.equals("charge"))
-            effect = "Charge extra damage " + random.nextInt(1, 9);
-        else if (feat.equals("Defensive Duelist"))
-            effect =
-                    "Reaction: AC "
-                            + (armorClass(charisma) + pb)
-                            + " versus melee attacks until next turn starts.";
-        else if (feat.equals("Interception"))
-            effect = "Reduce ally's attack damage by " + (random.nextInt(1, 11) + pb) + ".";
-        else if (feat.equals("Musician"))
-            effect = "Grant Heroic Inspiration to up to " + pb + " allies who hear the song.";
-        else if (feat.equals("Shield Master") && id.equals("bash"))
-            effect =
-                    "STR DC "
-                            + (8
-                                    + pb
-                                    + CharacterSheet.modifier(
-                                            effectiveScore(CharacterSheet.Ability.STR, charisma)))
-                            + "; failure: push 5 feet or Prone.";
-        else if (feat.equals("Piercer"))
-            effect =
-                    "Replacement d"
-                            + rerollSides
-                            + " ["
-                            + random.nextInt(1, rerollSides + 1)
-                            + "]; replace one piercing damage die and use the new result, once per"
-                            + " turn.";
-        else if (feat.equals("Lucky"))
-            effect =
-                    "Additional d20 ["
-                            + random.nextInt(1, 21)
-                            + "]; use "
-                            + (id.equals("advantage")
-                                    ? "the higher result with your original d20"
-                                    : "the lower result with the enemy's original attack d20")
-                            + ".";
-        else if (feat.equals("Unarmed Fighting"))
-            effect = "Grappled target takes " + random.nextInt(1, 5) + " Bludgeoning damage.";
-        else if (feat.equals("Savage Attacker"))
-            effect =
-                    "Weapon dice: "
-                            + roll(
-                                    random,
-                                    weapon.properties().contains("2d6") ? 2 : 1,
-                                    weapon.die())
-                            + " or "
-                            + roll(
-                                    random,
-                                    weapon.properties().contains("2d6") ? 2 : 1,
-                                    weapon.die())
-                            + "; choose either, then add modifiers once.";
-        else if (feat.equals("Polearm Master") && id.equals("pole"))
-            effect =
-                    "Bonus Action: weapon attack; d4 ["
-                            + random.nextInt(1, 5)
-                            + "] + STR modifier; Bludgeoning damage.";
-        if (healing > 0) {
-            setHpWithoutNotification(Math.min(maxHitPoints(), hitPoints() + healing));
-            effect += "; healed " + healing + ", HP " + hitPoints() + "/" + maxHitPoints();
-        }
-        if (action.dailyUses() != 0) speciesUses.merge(FeatActions.key(action), 1, Integer::sum);
-        changed();
-        return new FeatResult("", feat + " · " + action.label() + ": " + effect);
+        return result;
     }
 
-    private static int roll(java.util.random.RandomGenerator random, int count, int sides) {
-        return java.util.stream.IntStream.range(0, count)
-                .map(i -> random.nextInt(1, sides + 1))
-                .sum();
+    boolean mageHandWasCast() {
+        return mageHandCast;
     }
 
     private void setHpWithoutNotification(int current) {
@@ -485,6 +353,33 @@ public final class PlaySession {
         changed();
     }
 
+    public FeatResult spendHitDie(int charisma, java.util.random.RandomGenerator random) {
+        int spent = sheet.field(CharacterSheet.Field.SPENT_HIT_DICE);
+        if (spent >= selection.level()) return new FeatResult("No Hit Dice remain.", "");
+        if (hitPoints() == 0 || hitPoints() >= maxHitPoints())
+            return new FeatResult("Spend a Hit Die while conscious and below maximum HP.", "");
+        int sides = ClassDefinition.forClass(selection.classId()).hitDie();
+        int die = random.nextInt(1, sides + 1);
+        int healing =
+                Math.max(
+                        1,
+                        die
+                                + CharacterSheet.modifier(
+                                        effectiveScore(CharacterSheet.Ability.CON, charisma)));
+        sheet = sheet.withField(CharacterSheet.Field.SPENT_HIT_DICE, spent + 1);
+        setHpWithoutNotification(Math.min(maxHitPoints(), hitPoints() + healing));
+        changed();
+        return new FeatResult(
+                "",
+                "Short Rest Hit Die: d"
+                        + sides
+                        + " ["
+                        + die
+                        + "] + CON = "
+                        + healing
+                        + " HP (limited by maximum HP)");
+    }
+
     public int pendingDecisions() {
         return (int) requiredChoices().stream().filter(choice -> !choice.complete(sheet)).count();
     }
@@ -502,13 +397,14 @@ public final class PlaySession {
     }
 
     public int skillTier(CharacterSheet.Skill skill) {
-        return grants().tier(sheet, skill);
+        return Math.max(grants().tier(sheet, skill), dependentExpertise(skill) ? 2 : 0);
     }
 
     /** New proficiency choices exclude their own grant so saved choices remain editable. */
     public boolean proficiencyOptionAvailable(String choiceId, String option) {
         boolean newProficiency =
                 choiceId.equals(ChoiceIds.SORCERER_SKILLS)
+                        || choiceId.equals("fighter.skills")
                         || choiceId.equals(ChoiceIds.HUMAN_SKILL)
                         || choiceId.equals(ChoiceIds.ELF_SKILL)
                         || choiceId.equals(ChoiceIds.FEAT_SKILL_EXPERT_SKILL)
@@ -533,9 +429,7 @@ public final class PlaySession {
     }
 
     public int skillBonus(CharacterSheet.Skill skill, int charisma) {
-        int proficiency =
-                SorcererRules.calculate(selection.level(), charisma, selection.subclass())
-                        .proficiencyBonus();
+        int proficiency = ClassRules.proficiency(selection.level());
         return SkillRules.bonus(
                 effectiveScore(skill.ability, charisma), proficiency, skillTier(skill));
     }
@@ -573,8 +467,11 @@ public final class PlaySession {
 
     public CharacterSheet.Ability spellcastingAbility(SpellCatalog.Spell spell) {
         boolean classSpell =
-                SpellCatalog.alwaysPrepared(spell, selection.level(), selection.subclass())
-                        || selection.chosenSpells().contains(spell.name()) && spell.sorcererSpell();
+                sorcerer()
+                        && (SpellCatalog.alwaysPrepared(
+                                        spell, selection.level(), selection.subclass())
+                                || selection.chosenSpells().contains(spell.name())
+                                        && spell.sorcererSpell());
         if (!classSpell && selection.featSpell(spell))
             return featSpellGrants().stream()
                     .filter(g -> g.spell().equals(spell.name()))
@@ -630,7 +527,7 @@ public final class PlaySession {
 
     public String equipFeat(
             FeatCatalog.Feat feat, String notes, int charisma, boolean prerequisitesConfirmed) {
-        String error = feat.requirements(selection.level(), charisma);
+        String error = feat.requirements(selection.level(), charisma, selection.classId());
         if (!error.isEmpty() && !feats.containsKey(feat.name())) return error;
         if (feat.needsConfirmation(charisma)
                 && !prerequisitesConfirmed
@@ -640,6 +537,27 @@ public final class PlaySession {
         if (backgroundFeat(feat.name()) && !feats.containsKey(feat.name())) {
             setSheet(sheet.withNote(CharacterSheet.Note.BACKGROUND_FEAT, notes));
             return "";
+        }
+        if (!feats().containsKey(feat.name())
+                && Set.of("Skilled", "Skill Expert").contains(feat.name())) {
+            CharacterGrants other = grants();
+            String prefix = "choice.feat." + feat.name();
+            for (String key : List.copyOf(sheet.values().keySet())) {
+                if (!key.startsWith(prefix)) continue;
+                String id = key.substring(7);
+                boolean proficiency =
+                        feat.name().equals("Skilled")
+                                ? id.equals("feat.Skilled")
+                                        || id.matches("feat\\.Skilled\\.copy\\.[0-9]+")
+                                : id.equals(ChoiceIds.FEAT_SKILL_EXPERT_SKILL);
+                if (proficiency
+                        && java.util.Arrays.stream(CharacterSheet.Skill.values())
+                                .anyMatch(
+                                        skill ->
+                                                sheet.choice(id).contains(skill.label)
+                                                        && other.tier(sheet, skill) > 0))
+                    sheet = sheet.withChoice(id, List.of());
+            }
         }
         feats.put(feat.name(), notes);
         if (feat.repeatable() && sheet.choice("feat." + feat.name() + ".copies").isEmpty())
@@ -651,12 +569,34 @@ public final class PlaySession {
     public void removeFeat(String name) {
         if (backgroundFeat(name) && !feats.containsKey(name)) return;
         boolean removed = feats.remove(name) != null;
-        if (selection.species() == Species.HUMAN
+        if (!removed
+                && selection.species() == Species.HUMAN
                 && sheet.choice(ChoiceIds.HUMAN_FEAT).contains(name)) {
             sheet = sheet.withChoice(ChoiceIds.HUMAN_FEAT, List.of());
             removed = true;
         }
         if (removed) changed();
+    }
+
+    public String acquireFeatCopy(FeatCatalog.Feat feat, int charisma) {
+        if (!feat.repeatable()) return "This feat is not repeatable.";
+        String error = feat.requirements(selection.level(), charisma, selection.classId());
+        if (!error.isEmpty()) return error;
+        int next = feats.containsKey(feat.name()) ? FeatEffects.copies(sheet, feat.name()) + 1 : 1;
+        if (next > (feat.name().equals("Magic Initiate") ? 3 : 5))
+            return "All supported copies are already recorded.";
+        if (feat.name().equals("Skilled")) {
+            String id = FeatEffects.prefix(feat.name(), next);
+            if (sheet.choice(id).stream()
+                    .anyMatch(option -> !proficiencyOptionAvailable(id, option)))
+                sheet = sheet.withChoice(id, List.of());
+        }
+        feats.putIfAbsent(feat.name(), "");
+        sheet =
+                sheet.withChoice(
+                        "feat." + feat.name() + ".copies", List.of(Integer.toString(next)));
+        changed();
+        return "";
     }
 
     private final Map<String, Integer> speciesUses = new HashMap<>();
@@ -709,6 +649,7 @@ public final class PlaySession {
     }
 
     public int maxPoints() {
+        if (!sorcerer()) return 0;
         return selection.level() == 1 ? 0 : selection.level();
     }
 
@@ -717,9 +658,7 @@ public final class PlaySession {
     }
 
     public int maxSlots(int slot) {
-        return SorcererRules.calculate(selection.level(), 17, selection.subclass())
-                .spellSlots()
-                .get(slot - 1);
+        return stats(17).spellSlots().get(slot - 1);
     }
 
     public int remainingSlots(int slot) {
@@ -747,6 +686,7 @@ public final class PlaySession {
     }
 
     public String choose(Metamagic option, boolean choose) {
+        if (choose && !sorcerer()) return "Metamagic requires Sorcerer levels.";
         if (!choose) {
             meta.remove(option);
             changed();
@@ -764,6 +704,10 @@ public final class PlaySession {
     }
 
     public String shortRest() {
+        mageHandCast = false;
+        if (!sorcerer())
+            for (ResourcePool pool : resources())
+                speciesUses.put("resource:" + pool.id(), ClassResourceRules.afterShortRest(pool));
         FeatActions.all().stream()
                 .filter(FeatActions.Action::shortRest)
                 .forEach(action -> speciesUses.remove(FeatActions.key(action)));
@@ -783,6 +727,7 @@ public final class PlaySession {
     }
 
     public void longRest() {
+        mageHandCast = false;
         sheet = sheet.rested();
         if (automaticHp())
             sheet =
@@ -803,7 +748,14 @@ public final class PlaySession {
         return innate;
     }
 
+    public boolean featActionAvailable(FeatActions.Action action) {
+        return feats().containsKey(action.feat())
+                && remainingFeatUses(action) > 0
+                && (!action.feat().equals("Telekinetic") || mageHandCast);
+    }
+
     public String toggleInnate() {
+        if (!sorcerer()) return "Innate Sorcery requires Sorcerer levels.";
         if (innate) {
             innate = false;
             changed();
@@ -843,7 +795,8 @@ public final class PlaySession {
 
     public List<String> castSources(SpellCatalog.Spell spell) {
         if (spell.level() == 0) return List.of("Cantrip");
-        java.util.ArrayList<String> sources = new java.util.ArrayList<>(List.of("Spell slot"));
+        java.util.ArrayList<String> sources =
+                new java.util.ArrayList<>(sorcerer() ? List.of("Spell slot") : List.of());
         if (selection.speciesSpell(spell)) sources.add("Species free cast");
         for (var grant : featSpellGrants())
             if (grant.spell().equals(spell.name()) && grant.dailyCast())
@@ -857,6 +810,7 @@ public final class PlaySession {
 
     public static String castSourceLabel(String source) {
         if (source == null) return "";
+        if (source.startsWith("human.feat.")) return "Human · " + source.substring(11);
         if (source.startsWith("background.")) {
             String[] parts = source.split("\\.", 4);
             return parts[1] + " · " + parts[3];
@@ -905,14 +859,20 @@ public final class PlaySession {
                     1,
                     Integer::sum);
         if (SpellDetails.forSpell(spell).concentration()) concentration = spell.name();
+        if (spell.name().equals("Mage Hand")) mageHandCast = true;
         changed();
         return "";
     }
 
     public String equipmentCastingError() {
-        if (!EquipmentRules.trained(EquipmentRules.worn(sheet), feats().keySet()))
+        var training = ClassDefinition.forClass(selection.classId()).armorTraining();
+        var armor = EquipmentRules.worn(sheet);
+        if (!training.contains(armor.category())
+                && !EquipmentRules.trained(armor, feats().keySet()))
             return "Cannot cast spells while wearing armor without its training.";
-        if (EquipmentRules.shield(sheet) && !feats().containsKey("Lightly Armored"))
+        if (!training.contains("Shield")
+                && EquipmentRules.shield(sheet)
+                && !feats().containsKey("Lightly Armored"))
             return "Cannot cast spells while using a shield without shield training.";
         return "";
     }
@@ -969,6 +929,7 @@ public final class PlaySession {
         if (SpellDetails.forSpell(spell).concentration()) {
             concentration = spell.name();
         }
+        if (spell.name().equals("Mage Hand")) mageHandCast = true;
         changed();
         return "";
     }
@@ -988,17 +949,25 @@ public final class PlaySession {
                                 + (feats().containsKey("Alert")
                                         ? 2 + (selection.level() - 1) / 4
                                         : 0);
+        boolean advantage = !sorcerer() && selection.level() >= 3;
+        int second = advantage ? random.nextInt(1, 21) : die;
         changed();
         return "Initiative d20 ["
                 + die
+                + (advantage ? ", " + second + " · Advantage" : "")
                 + "] "
                 + String.format("%+d", bonus)
                 + " = "
-                + (die + bonus)
+                + (Math.max(die, second) + bonus)
                 + (feats().containsKey("Boon of Fate") ? "; Boon of Fate refreshed" : "");
     }
 
     public PlayState snapshot() {
+        CharacterSheet savedSheet =
+                sorcerer()
+                        ? sheet
+                        : sheet.withChoice(
+                                "class.progression", List.of(selection.progression().encode()));
         return new PlayState(
                 Arrays.stream(slots).boxed().toList(),
                 points,
@@ -1013,10 +982,11 @@ public final class PlaySession {
                 hitPoints,
                 maxHitPoints,
                 feats,
-                sheet);
+                savedSheet);
     }
 
     public void restore(PlayState state) {
+        mageHandCast = false;
         lastCastDetails = "";
         sheet = state.sheet();
         restoreRevision++;

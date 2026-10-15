@@ -42,6 +42,8 @@ public final class FeatCombatRules {
                 modifier
                         + (context.unarmed()
                                         || !weapon.martial()
+                                        || ClassDefinition.forClass(session.selection().classId())
+                                                .martialWeapons()
                                         || feats.contains("Martial Weapon Training")
                                 ? pb
                                 : 0)
@@ -95,6 +97,15 @@ public final class FeatCombatRules {
                 && weapon.properties().contains("Heavy")
                 && feats.contains("Great Weapon Master")) modifier += pb;
         String notes = (context.unarmed() ? "Bludgeoning" : weapon.damage());
+        if (!session.sorcerer()
+                && !context.unarmed()
+                && sheet.choice("fighter.mastery").contains(weapon.name()))
+            notes +=
+                    "; mastery "
+                            + weapon.mastery()
+                            + (session.selection().level() >= 9
+                                    ? " (Tactical Master: may replace with Push, Sap or Slow)"
+                                    : "");
         if (feats.contains("Boon of Irresistible Offense"))
             notes += "; ignores physical resistance";
         if (!context.unarmed()

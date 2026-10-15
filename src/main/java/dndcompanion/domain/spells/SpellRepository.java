@@ -7,7 +7,12 @@ import java.util.Optional;
 /** Storage-independent, immutable view of the bundled spell catalog. */
 public interface SpellRepository {
     record Entry(
-            String name, int level, boolean sorcererSpell, SpellDetails details, URI reference) {}
+            String name,
+            int level,
+            boolean sorcererSpell,
+            SpellDetails details,
+            URI reference,
+            SpellProfile profile) {}
 
     Map<String, Entry> all();
 

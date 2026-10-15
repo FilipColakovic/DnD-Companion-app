@@ -17,7 +17,6 @@ import dndcompanion.domain.character.CharacterState;
 import dndcompanion.domain.character.FeatCatalog;
 import dndcompanion.domain.character.Metamagic;
 import dndcompanion.domain.character.PlaySession;
-import dndcompanion.domain.character.SorcererRules;
 import dndcompanion.domain.spells.SpellCatalog;
 import dndcompanion.ui.GrimoirePanel;
 import dndcompanion.ui.common.AppStyle;
@@ -84,7 +83,9 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         JPanel heading = FeatComponents.card(new BorderLayout(10, 6));
         JPanel title = AppStyle.section(new BorderLayout(0, 5));
         title.add(AppStyle.label("CHARACTER & SHEET", 22, true), BorderLayout.NORTH);
-        title.add(FeatComponents.tag("SORCERER · PHB 2024", true), BorderLayout.WEST);
+        title.add(
+                FeatComponents.tag(session.selection().classId() + " · PHB 2024", true),
+                BorderLayout.WEST);
         heading.add(title, BorderLayout.CENTER);
         JPanel restActions = new FeatComponents.WrapPanel(5);
         shortRest = AppStyle.compactButton("Short Rest", () -> status.setText(session.shortRest()));
@@ -97,6 +98,7 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         innate.getAccessibleContext().setAccessibleName("Toggle Innate Sorcery");
         innate.putClientProperty("tactileRole", "blue");
         restActions.add(innate);
+        innate.setVisible(session.sorcerer());
         restActions.add(AppStyle.compactButton("Export sheet", this::printSheet));
         heading.add(restActions, BorderLayout.SOUTH);
         FeatComponents.row(content, heading);
@@ -157,12 +159,14 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         }
         FeatComponents.row(resources, slots);
         FeatComponents.row(right, resources);
+        resources.setVisible(session.sorcerer());
         JPanel traits = card("FEATURES & TRAITS");
         FeatComponents.row(traits, features);
         JPanel links = new FeatComponents.WrapPanel(5);
-        links.add(
-                AppStyle.compactButton(
-                        "Metamagic", () -> workspace.showPage(GrimoirePanel.METAMAGIC)));
+        if (session.sorcerer())
+            links.add(
+                    AppStyle.compactButton(
+                            "Metamagic", () -> workspace.showPage(GrimoirePanel.METAMAGIC)));
         links.add(AppStyle.compactButton("Prepared spells", workspace::showPreparedSpells));
         links.add(
                 AppStyle.compactButton(
@@ -230,12 +234,10 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
             CharacterState state = editor.snapshot();
             CharacterSheet sheet = session.sheet();
             var stats =
-                    SorcererRules.calculate(
-                            state.level(),
+                    session.stats(
                             session.effectiveScore(
                                     dndcompanion.domain.character.CharacterSheet.Ability.CHA,
-                                    state.charisma()),
-                            state.subclass());
+                                    state.charisma()));
             boolean restored = restoreRevision != session.restoreRevision();
             restoreRevision = session.restoreRevision();
             identity.refresh(state, sheet, stats, restored);
@@ -317,7 +319,7 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
                     FeatComponents.block(
                             "SUBCLASS & LINEAGE",
                             FeatComponents.text(
-                                    state.subclass()
+                                    state.classes().getFirst().subclassLabel()
                                             + "\n"
                                             + state.species()
                                             + (speciesChoices.isBlank()
@@ -335,6 +337,15 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
                 meta.setToolTipText(option.description());
                 FeatComponents.row(features, meta);
             }
+            if (!session.sorcerer())
+                FeatComponents.row(
+                        features,
+                        FeatComponents.block(
+                                "CLASS FEATURES",
+                                FeatComponents.text(
+                                        dndcompanion.domain.character.FighterRules.features(
+                                                state.level()),
+                                        12)));
             List<SpellCatalog.Spell> grants =
                     session.selection().catalog().stream()
                             .filter(session.selection()::automatic)
@@ -426,19 +437,19 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         CharacterState state = editor.snapshot();
         CharacterSheet sheet = session.sheet();
         var stats =
-                SorcererRules.calculate(
-                        state.level(),
+                session.stats(
                         session.effectiveScore(
                                 dndcompanion.domain.character.CharacterSheet.Ability.CHA,
-                                state.charisma()),
-                        state.subclass());
+                                state.charisma()));
         JTextArea document =
                 new JTextArea(
                         state.name()
-                                + " // SORCERER "
+                                + " // "
+                                + state.classId()
+                                + " "
                                 + state.level()
                                 + "\n"
-                                + state.subclass()
+                                + state.classes().getFirst().subclassLabel()
                                 + " // "
                                 + state.species()
                                 + "\n\n");
@@ -446,7 +457,11 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
         document.setWrapStyleWord(true);
         document.append(
                 "Background: "
-                        + sheet.note(Note.BACKGROUND)
+                        + dndcompanion.domain.character.BackgroundCatalog.selected(sheet)
+                                .map(
+                                        dndcompanion.domain.character.BackgroundCatalog.Background
+                                                ::name)
+                                .orElse(sheet.note(Note.BACKGROUND))
                         + "; Alignment: "
                         + sheet.note(Note.ALIGNMENT)
                         + "\n");
@@ -486,12 +501,9 @@ public final class CharacterSheetPanel extends JPanel implements LiveView {
                                                 + ": "
                                                 + String.join(", ", sheet.choice(choice.id()))
                                                 + "\n"));
-        document.append(
-                "\nSorcery Points "
-                        + session.remainingPoints()
-                        + " / "
-                        + session.maxPoints()
-                        + "\n");
+        for (var pool : session.resources())
+            document.append(
+                    "\n" + pool.label() + " " + pool.remaining() + " / " + pool.maximum() + "\n");
         for (int tier = 1; tier <= 9; tier++)
             if (session.maxSlots(tier) > 0)
                 document.append(

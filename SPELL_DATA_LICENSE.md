@@ -56,6 +56,13 @@ summaries; rebuilding does not download or replace them with an upstream version
 The bundled database is included so ordinary builds and launches work offline
 using the same SQLite JDBC dependency as character saves.
 
+`scripts/data/spell-mechanics.tsv` supplies reviewed class-list membership, attack-roll flags
+and saving-throw abilities for the same 219 records. Class lists were checked against the
+[official 2024 class chapter](https://www.dndbeyond.com/sources/dnd/br-2024/character-classes)
+and each spell's linked reference. These structured facts are bundled in schema 2 tables
+`spell_classes` and `spell_checks`; rebuilding validates full coverage. They do not add
+full spell coverage for classes that have not yet been implemented.
+
 The Metamagic descriptions in `domain/character/Metamagic.java` are original concise
 summaries checked against the [2024 Sorcerer class](https://roll20.net/compendium/dnd5e/Classes%3ASorcerer?expansion=32231).
 Rest recovery, Innate Sorcery, and progression were checked against the

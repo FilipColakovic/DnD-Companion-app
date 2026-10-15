@@ -128,7 +128,7 @@ final class FeatInspector extends JPanel implements LiveView {
                 BorderLayout.NORTH);
         notesBody.add(new JScrollPane(notes), BorderLayout.CENTER);
         FeatComponents.row(body, fold("Choices & notes", notesBody));
-        int level = character.get().level(), next = FeatCatalog.nextMilestone(level);
+        int level = character.get().level(), next = FeatCatalog.nextMilestone(character.get());
         previewLevel = new JSpinner(new SpinnerNumberModel(Math.max(level, next), 1, 20, 1));
         previewLevel.getAccessibleContext().setAccessibleName("Feat preview level");
         JPanel previewBody = AppStyle.section(new BorderLayout(8, 6));
@@ -156,6 +156,19 @@ final class FeatInspector extends JPanel implements LiveView {
         JPanel secondary = new FeatComponents.WrapPanel(4);
         remove = AppStyle.compactButton("Remove feat", () -> session.removeFeat(feat.name()));
         secondary.add(remove);
+        if (feat.repeatable()) {
+            JButton addCopy =
+                    AppStyle.compactButton(
+                            "Add acquired copy",
+                            () ->
+                                    message.accept(
+                                            session.acquireFeatCopy(
+                                                    feat, character.get().charisma())));
+            addCopy.setToolTipText(
+                    "Record another copy acquired through advancement, independently of background"
+                            + " grants.");
+            secondary.add(addCopy);
+        }
         secondary.add(AppStyle.compactButton("Full PHB entry", this::openSource));
         if (openDetails != null)
             secondary.add(AppStyle.compactButton("Open details window", openDetails));
@@ -230,7 +243,8 @@ final class FeatInspector extends JPanel implements LiveView {
                                 || session.snapshot().feats().containsKey(feat.name())));
         select.setEnabled(
                 selected
-                        || feat.requirements(state.level(), state.charisma()).isEmpty()
+                        || feat.requirements(state.level(), state.charisma(), state.classId())
+                                        .isEmpty()
                                 && (!feat.needsConfirmation(state.charisma())
                                         || confirm.isSelected()));
     }
@@ -238,10 +252,12 @@ final class FeatInspector extends JPanel implements LiveView {
     private void refreshPreview() {
         CharacterState state = character.get();
         int level = (Integer) previewLevel.getValue();
-        String required = feat.requirements(level, state.charisma());
+        String required = feat.requirements(level, state.charisma(), state.classId());
         String result = required.isEmpty() ? "Level requirement met" : required;
         if (feat.needsConfirmation(state.charisma())) result += "; confirm other prerequisites.";
-        if (feat.abilityIncrease().contains("CHA") || feat.abilityIncrease().startsWith("Any")) {
+        if (session.sorcerer()
+                && (feat.abilityIncrease().contains("CHA")
+                        || feat.abilityIncrease().startsWith("Any"))) {
             int bonus = feat.name().equals("Ability Score Improvement") ? 2 : 1;
             int charisma =
                     Math.max(

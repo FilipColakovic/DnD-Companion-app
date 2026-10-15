@@ -31,6 +31,42 @@ public record PlayState(
         int maxHitPoints,
         Map<String, String> feats,
         CharacterSheet sheet) {
+    public PlayState withSheet(CharacterSheet value) {
+        return new PlayState(
+                spentSlots,
+                spentPoints,
+                restorationUsed,
+                metamagic,
+                concentration,
+                speciesUses,
+                innateUses,
+                innateActive,
+                dark,
+                textSize,
+                hitPoints,
+                maxHitPoints,
+                feats,
+                value);
+    }
+
+    public PlayState withAppearance(boolean value, int size) {
+        return new PlayState(
+                spentSlots,
+                spentPoints,
+                restorationUsed,
+                metamagic,
+                concentration,
+                speciesUses,
+                innateUses,
+                innateActive,
+                value,
+                size,
+                hitPoints,
+                maxHitPoints,
+                feats,
+                sheet);
+    }
+
     /** Compatibility constructor: former turn flags are ignored when loading older callers. */
     public PlayState(
             List<Integer> spentSlots,

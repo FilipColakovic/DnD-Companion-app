@@ -25,6 +25,7 @@ public final class FeatCombatPanel extends JPanel {
     private final Consumer<String> log;
     private final RandomGenerator random = RandomGenerator.getDefault();
     private final JCheckBox critical = new JCheckBox("Critical hit"),
+            studied = new JCheckBox("Studied Attacks: same creature after a miss"),
             action = new JCheckBox("Attack action", true),
             twoHands = new JCheckBox("Two hands"),
             extra = new JCheckBox("Light extra attack"),
@@ -52,6 +53,8 @@ public final class FeatCombatPanel extends JPanel {
                         "Slashing",
                         "Thunder"
                     });
+    private final JComboBox<String> tacticalMaster =
+            new JComboBox<>(new String[] {"Weapon mastery", "Push", "Sap", "Slow"});
     private final JSpinner damage = new JSpinner(new SpinnerNumberModel(0, 0, 9999, 1));
     private final JComboBox<String> save =
             new JComboBox<>(new String[] {"STR", "DEX", "CON", "INT", "WIS", "CHA", "Death"});
@@ -62,6 +65,13 @@ public final class FeatCombatPanel extends JPanel {
         this.charisma = charisma;
         this.log = log;
         JPanel body = AppStyle.card(new java.awt.GridBagLayout());
+        studied.getAccessibleContext().setAccessibleName("Studied Attacks");
+        tacticalMaster.getAccessibleContext().setAccessibleName("Tactical Master property");
+        tacticalMaster.setToolTipText("For a mastered weapon, replace its mastery for this attack");
+        if (!session.sorcerer()) {
+            FeatComponents.row(body, studied);
+            FeatComponents.row(body, tacticalMaster);
+        }
         FeatComponents.row(body, AppStyle.label("EQUIPMENT & FEAT ROLLS", 14, true));
         JPanel flags = AppStyle.section(new GridLayout(0, 2, 4, 2));
         for (JCheckBox box :
@@ -89,8 +99,13 @@ public final class FeatCombatPanel extends JPanel {
         incoming.add(dim);
         FeatComponents.row(body, incoming);
         FeatComponents.row(body, AppStyle.compactButton("Apply incoming damage", this::damage));
-        body.setVisible(false);
-        var toggle = AppStyle.compactButton("Show equipment & feat rolls", () -> {});
+        body.setVisible(!session.sorcerer());
+        var toggle =
+                AppStyle.compactButton(
+                        session.sorcerer()
+                                ? "Show equipment & feat rolls"
+                                : "Hide equipment & feat rolls",
+                        () -> {});
         toggle.addActionListener(
                 event -> {
                     body.setVisible(!body.isVisible());
@@ -104,6 +119,12 @@ public final class FeatCombatPanel extends JPanel {
         add(toggle, BorderLayout.NORTH);
         add(body, BorderLayout.CENTER);
         setOpaque(false);
+        refresh();
+    }
+
+    public void refresh() {
+        studied.setVisible(!session.sorcerer() && session.selection().level() >= 13);
+        tacticalMaster.setVisible(!session.sorcerer() && session.selection().level() >= 9);
     }
 
     private void weapon() {
@@ -124,12 +145,21 @@ public final class FeatCombatPanel extends JPanel {
             return;
         }
         int die = random.nextInt(1, 21);
+        boolean studiedAttack =
+                !session.sorcerer() && session.selection().level() >= 13 && studied.isSelected();
         boolean advantage =
-                session.feats().containsKey("Grappler") && grappled.isSelected()
+                studiedAttack
+                        || session.feats().containsKey("Grappler") && grappled.isSelected()
                         || session.feats().containsKey("Mounted Combatant") && mounted.isSelected();
         int second = advantage ? random.nextInt(1, 21) : die;
         int attackDie = Math.max(die, second);
-        boolean criticalHit = critical.isSelected() || attackDie == 20;
+        boolean criticalHit =
+                critical.isSelected()
+                        || attackDie
+                                >= (session.sorcerer()
+                                        ? 20
+                                        : dndcompanion.domain.character.FighterRules
+                                                .criticalThreshold(session.selection().level()));
         var rolled =
                 FeatCombatRules.weapon(
                         session,
@@ -174,7 +204,20 @@ public final class FeatCombatPanel extends JPanel {
                         + (criticalHit ? " (confirmed critical)" : " (apply only on a hit)")
                         + (attackDie == 1 ? " · Natural 1: automatic miss" : "")
                         + "; "
-                        + rolled.notes());
+                        + rolled.notes()
+                        + (unarmedAttack ? "" : tacticalMasterNote(selectedWeapon.name())));
+        if (studiedAttack) studied.setSelected(false);
+    }
+
+    private String tacticalMasterNote(String weapon) {
+        if (session.sorcerer()
+                || session.selection().level() < 9
+                || tacticalMaster.getSelectedIndex() == 0) return "";
+        if (!session.sheet().choice("fighter.mastery").contains(weapon))
+            return " · Tactical Master unavailable: weapon is not one of your mastered weapons.";
+        return " · Tactical Master replaces the weapon's mastery with "
+                + tacticalMaster.getSelectedItem()
+                + "; confirm its trigger and apply at the table.";
     }
 
     private void savingThrow() {
@@ -184,6 +227,7 @@ public final class FeatCombatPanel extends JPanel {
         boolean advantage =
                 death
                         ? session.feats().containsKey("Durable")
+                                || !session.sorcerer() && session.selection().level() >= 18
                         : concentration.isSelected()
                                 && ability == CharacterSheet.Ability.CON
                                 && session.feats().containsKey("War Caster");
@@ -196,6 +240,13 @@ public final class FeatCombatPanel extends JPanel {
                                 + (session.saveProficiency(ability)
                                         ? 2 + (session.selection().level() - 1) / 4
                                         : 0);
+        if (death
+                && !session.sorcerer()
+                && session.selection().level() >= 18
+                && Math.max(first, second) >= 18) {
+            session.setCurrentHitPoints(Math.min(1, session.maxHitPoints()));
+            log.accept("Champion Survivor: death save natural 18–20 counts as 20; regain 1 HP.");
+        }
         log.accept(
                 selected
                         + " save: "

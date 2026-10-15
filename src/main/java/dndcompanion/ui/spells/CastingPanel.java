@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.IntSupplier;
 import java.util.random.RandomGenerator;
 
@@ -56,8 +55,10 @@ public final class CastingPanel extends JPanel implements LiveView {
     private SpellCatalog.Spell selected;
     private int castingLevel;
     private final JPanel arsenal = new CombatArsenalGrid();
+    private final JPanel spellList;
     private final CombatTierFilters filters = new CombatTierFilters(this::rebuildArsenal);
     private final CombatDossier dossier = new CombatDossier();
+    private final CombatMetamagic metamagic;
     private final CombatLog combatLog = new CombatLog();
     private final CastControls castControls = new CastControls(this::cast, this::rollHealing);
     private final JTextArea preview = dossier.preview;
@@ -68,6 +69,8 @@ public final class CastingPanel extends JPanel implements LiveView {
     private final JButton castButton = castControls.castButton;
     private final CombatDiceTray diceTray;
     private final dndcompanion.ui.character.FeatActionsPanel featActions;
+    private final dndcompanion.ui.character.ClassActionsPanel classActions;
+    private final dndcompanion.ui.character.FeatCombatPanel equipmentActions;
     private final JButton damageButton, criticalButton;
     private Runnable spellbookAction;
     private final RandomGenerator random = RandomGenerator.getDefault();
@@ -100,9 +103,14 @@ public final class CastingPanel extends JPanel implements LiveView {
         setBorder(new EmptyBorder(14, 14, 14, 14));
         JPanel columns = new CombatColumns();
         Column right = new Column();
-        JPanel spellList = arsenalCard();
+        classActions =
+                new dndcompanion.ui.character.ClassActionsPanel(
+                        session, charisma, this::recordEvent);
+        spellList = arsenalCard();
         spellList.setMinimumSize(new Dimension(350, 200));
         right.addCard(dossier);
+        metamagic = new CombatMetamagic(session, this::preview);
+        right.addCard(metamagic);
         diceTray =
                 new CombatDiceTray(
                         this::selectedSpell,
@@ -120,9 +128,9 @@ public final class CastingPanel extends JPanel implements LiveView {
                 new dndcompanion.ui.character.FeatActionsPanel(
                         session, charisma, this::recordEvent);
         right.addCard(featActions);
-        right.addCard(
-                new dndcompanion.ui.character.FeatCombatPanel(
-                        session, charisma, this::recordEvent));
+        equipmentActions =
+                new dndcompanion.ui.character.FeatCombatPanel(session, charisma, this::recordEvent);
+        right.addCard(equipmentActions);
         right.addCard(combatLog);
         GridBagConstraints c = new GridBagConstraints();
         c.gridy = 0;
@@ -131,7 +139,13 @@ public final class CastingPanel extends JPanel implements LiveView {
         c.gridx = 0;
         c.weightx = .55;
         c.insets = new Insets(0, 0, 0, 6);
-        columns.add(spellList, c);
+        if (session.sorcerer()) columns.add(spellList, c);
+        else {
+            Column left = new Column();
+            left.addCard(classActions);
+            left.addCard(spellList);
+            columns.add(columnScroll(left), c);
+        }
         c.gridx = 1;
         c.weightx = .45;
         c.insets = new Insets(0, 6, 0, 0);
@@ -156,9 +170,11 @@ public final class CastingPanel extends JPanel implements LiveView {
     private JPanel arsenalCard() {
         JPanel card = AppStyle.card(new BorderLayout(0, 12));
         card.setName("spell-arsenal-card");
+        card.putClientProperty("surfaceRole", "background");
         card.add(filters, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(arsenal);
         AppStyle.scrollPane(scroll);
+        scroll.getViewport().putClientProperty("surfaceRole", "background");
         scroll.setPreferredSize(new Dimension(400, 235));
         card.add(scroll, BorderLayout.CENTER);
         return card;
@@ -219,6 +235,9 @@ public final class CastingPanel extends JPanel implements LiveView {
         }
         filters.refresh(available);
         featActions.refresh();
+        classActions.refresh();
+        spellList.setVisible(session.sorcerer() || !available.isEmpty());
+        equipmentActions.refresh();
         updating = false;
         refreshSlots();
     }
@@ -279,8 +298,11 @@ public final class CastingPanel extends JPanel implements LiveView {
             JTextArea text =
                     AppStyle.text(
                             available.isEmpty()
-                                    ? "No available spells. Choose your prepared spells and"
-                                            + " cantrips to fill the arsenal."
+                                    ? session.sorcerer()
+                                            ? "No available spells. Choose your prepared spells and"
+                                                    + " cantrips to fill the arsenal."
+                                            : "Champion has no class spellcasting. Spells granted"
+                                                    + " by species or feats appear here."
                                     : "No spells match this filter.");
             text.setRows(2);
             empty.add(text, BorderLayout.CENTER);
@@ -334,12 +356,10 @@ public final class CastingPanel extends JPanel implements LiveView {
     }
 
     private SorcererRules.Stats stats() {
-        return SorcererRules.calculate(
-                session.selection().level(),
+        return session.stats(
                 session.effectiveScore(
                         dndcompanion.domain.character.CharacterSheet.Ability.CHA,
-                        charisma.getAsInt()),
-                session.selection().subclass());
+                        charisma.getAsInt()));
     }
 
     private int attackBonus() {
@@ -365,11 +385,16 @@ public final class CastingPanel extends JPanel implements LiveView {
     private void preview() {
         diceTray.refresh();
         SpellCatalog.Spell spell = selectedSpell();
+        dossier.setVisible(spell != null || session.sorcerer());
+        castControls.setVisible(spell != null || session.sorcerer());
         if (spell == null) {
+            dossier.entry(null);
+            dossier.compatibility.setText("");
+            dossier.specifications.setVisible(false);
+            metamagic.refresh(null, List.of());
             dossierTitle.setText("Spell dossier");
             dossierSubtitle.setText("Your chosen spell appears here");
-            preview.setText(
-                    "Open the Spellbook and choose cantrips and prepared spells to get started.");
+            preview.setText("Open the Spell Library and learn spells to get started.");
             cost.setText("No spell selected");
             castButton.setEnabled(false);
             damageButton.setEnabled(false);
@@ -377,6 +402,8 @@ public final class CastingPanel extends JPanel implements LiveView {
             return;
         }
         SpellDetails d = SpellDetails.forSpell(spell);
+        dossier.entry(spell);
+        metamagic.refresh(spell, compatibleChosen(spell));
         var baseDamage = DamageDice.profile(spell, effectiveLevel(), session.selection().level());
         boolean chosenDamage =
                 baseDamage.isPresent() && baseDamage.get().type().equals("chosen type");
@@ -433,7 +460,7 @@ public final class CastingPanel extends JPanel implements LiveView {
             updating = wasUpdating;
         }
         boolean innate = session.innateActive() && sorcererSpell(spell);
-        dossierTitle.setText(spell.name());
+        dossierTitle.setText(spell.name().toUpperCase(java.util.Locale.ROOT));
         dossierSubtitle.setText(
                 spell.levelName()
                         + " · "
@@ -462,7 +489,9 @@ public final class CastingPanel extends JPanel implements LiveView {
                                                 ? "unlimited"
                                                 : session.freeCasts(spell, source) + " left")
                                 : slotCost)
-                        + " + 0 SP · "
+                        + " + "
+                        + session.metamagicCost(metamagic.selected())
+                        + " SP · "
                         + session.remainingPoints()
                         + " SP available");
         String enhancements =
@@ -470,9 +499,9 @@ public final class CastingPanel extends JPanel implements LiveView {
                         ? "No chosen Metamagic matches."
                         : "Compatible chosen Metamagic: "
                                 + compatibleNames(spell)
-                                + ". View these options in the Metamagic.";
+                                + ". Select modifiers below.";
         String checks =
-                (hasSave(spell) ? "Save DC " + saveDc() : "")
+                (hasSave(spell) ? "Save DC " + saveDc() + savingAbilityLabel(spell) : "")
                         + (hasSave(spell) && hasAttack(spell) ? " · " : "")
                         + (hasAttack(spell)
                                 ? "Attack "
@@ -480,35 +509,28 @@ public final class CastingPanel extends JPanel implements LiveView {
                                         + (innate ? " with Advantage" : "")
                                 : "");
         if (checks.isBlank()) checks = "No target saving throw or caster attack roll.";
+        dossier.specifications(
+                d.castingTime(),
+                session.spellRange(spell),
+                d.duration(),
+                session.spellComponents(spell, source),
+                checks,
+                d.concentration());
+        String effect = damageSummary(spell, effectiveLevel(), session.selection().level());
+        String[] opening =
+                d.description()
+                        .replaceAll("<[^>]*>", " ")
+                        .replaceAll("[*_]", "")
+                        .split("(?<=\\.)\\s+", 3);
+        String summary =
+                String.join(" ", java.util.Arrays.copyOf(opening, Math.min(2, opening.length)));
         String mechanics =
-                "Casting: "
-                        + d.castingTime()
-                        + "\nRange: "
-                        + session.spellRange(spell)
-                        + "\nDuration: "
-                        + d.duration()
-                        + "\nComponents: "
-                        + session.spellComponents(spell, source)
-                        + "\n"
-                        + checks
-                        + "\nConcentration: "
-                        + (d.concentration() ? "required" : "not required")
-                        + (d.ritual() ? " · Ritual" : "")
-                        + "\n\n"
-                        + damageSummary(spell, effectiveLevel(), session.selection().level())
-                        + "\n\n"
-                        + enhancements
-                        + "\n\nSPELL MECHANICS\n"
-                        + d.description().replaceAll("<[^>]*>", " ")
-                        + "\n\n"
-                        + dndcompanion.domain.character.FeatEffects.spellNotes(
-                                session.feats().keySet(), spell.name())
-                        + "\n\nHIGHER LEVELS\n"
-                        + (d.higherLevels().isBlank()
-                                ? "No additional scaling listed."
-                                : d.higherLevels());
+                effect.equals("No direct damage. Apply the spell's described effects.")
+                        ? "No direct damage. " + summary
+                        : effect;
         boolean same = Objects.equals(preview.getClientProperty("spellName"), spell.name());
         TextUpdates.set(preview, mechanics, same);
+        TextUpdates.set(dossier.compatibility, enhancements, same);
         preview.putClientProperty("spellName", spell.name());
         var formula = damageProfile();
         damageButton.setEnabled(formula.isPresent());
@@ -547,6 +569,11 @@ public final class CastingPanel extends JPanel implements LiveView {
                                                 : formula);
     }
 
+    private static String savingAbilityLabel(SpellCatalog.Spell spell) {
+        String label = dndcompanion.domain.spells.SpellProfile.forSpell(spell).saveLabel();
+        return label.isEmpty() ? "" : " " + label;
+    }
+
     public static String damageSummary(
             SpellCatalog.Spell spell, int effective, int characterLevel) {
         if (spell.name().equals("True Strike")) {
@@ -581,7 +608,7 @@ public final class CastingPanel extends JPanel implements LiveView {
                         != JOptionPane.YES_OPTION) return;
         int selectedLevel = slotLevel();
         String source = (String) castControls.source.getSelectedItem();
-        String error = session.castFromSource(spell, selectedLevel, source, Set.of());
+        String error = session.castFromSource(spell, selectedLevel, source, metamagic.selected());
         result.setText(error.isEmpty() ? "Cast " + spell.name() + ". Resources updated." : error);
         if (error.isEmpty())
             recordEvent(
@@ -765,6 +792,7 @@ public final class CastingPanel extends JPanel implements LiveView {
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
         scroll.setMinimumSize(new Dimension(350, 200));
+        scroll.setPreferredSize(new Dimension(400, 600));
         return scroll;
     }
 
@@ -803,19 +831,31 @@ public final class CastingPanel extends JPanel implements LiveView {
 
     private static final class Column extends JPanel implements Scrollable {
         Column() {
-            super(new GridBagLayout());
+            setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
             setOpaque(false);
         }
 
         void addCard(JPanel panel) {
-            GridBagConstraints c = new GridBagConstraints();
-            c.gridx = 0;
-            c.gridy = getComponentCount();
-            c.weightx = 1;
-            c.weighty = c.gridy == 0 ? 1 : 0;
-            c.fill = GridBagConstraints.BOTH;
-            c.insets = new Insets(c.gridy == 0 ? 0 : 12, 0, 0, 0);
-            add(panel, c);
+            int gap = getComponentCount() > 0 ? 12 : 0;
+            JPanel wrapper =
+                    new JPanel(new BorderLayout()) {
+                        @Override
+                        public Dimension getPreferredSize() {
+                            return panel.isVisible()
+                                    ? super.getPreferredSize()
+                                    : new Dimension(0, 0);
+                        }
+
+                        @Override
+                        public Dimension getMaximumSize() {
+                            return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+                        }
+                    };
+            wrapper.setOpaque(false);
+            wrapper.setBorder(new EmptyBorder(gap, 0, 0, 0));
+            wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+            wrapper.add(panel);
+            add(wrapper);
         }
 
         @Override
@@ -840,7 +880,7 @@ public final class CastingPanel extends JPanel implements LiveView {
 
         @Override
         public boolean getScrollableTracksViewportHeight() {
-            return getParent() != null && getParent().getHeight() >= getPreferredSize().height;
+            return false;
         }
     }
 }

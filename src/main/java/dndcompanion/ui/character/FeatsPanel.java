@@ -208,7 +208,7 @@ public final class FeatsPanel extends JPanel implements LiveView {
         if (session.feats().containsKey(feat.name())) session.removeFeat(feat.name());
         else {
             CharacterState state = character.get();
-            if (feat.requirements(state.level(), state.charisma()).isEmpty()
+            if (feat.requirements(state.level(), state.charisma(), state.classId()).isEmpty()
                     && !feat.needsConfirmation(state.charisma()))
                 message.setText(
                         session.equipFeat(
@@ -222,7 +222,7 @@ public final class FeatsPanel extends JPanel implements LiveView {
         refreshing = true;
         try {
             CharacterState state = character.get();
-            int next = FeatCatalog.nextMilestone(state.level());
+            int next = FeatCatalog.nextMilestone(state);
             count.setText(String.format("%02d SELECTED", session.feats().size()));
             milestone.setText(next == 0 ? "COMPLETE" : "LV " + next);
             context.setText(state.subclass() + " · LEVEL " + state.level());

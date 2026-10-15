@@ -1,0 +1,220 @@
+name	classes	attack	saves
+Acid Splash	SORCERER|WIZARD	false	DEX
+Blade Ward	BARD|SORCERER|WARLOCK|WIZARD	false	
+Chill Touch	SORCERER|WARLOCK|WIZARD	true	
+Dancing Lights	BARD|SORCERER|WIZARD	false	
+Druidcraft	DRUID	false	
+Eldritch Blast	WARLOCK	true	
+Elementalism	DRUID|SORCERER	false	
+Fire Bolt	SORCERER|WIZARD	true	
+Friends	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Guidance	CLERIC|DRUID	false	
+Light	BARD|CLERIC|SORCERER|WIZARD	false	
+Mage Hand	BARD|SORCERER|WARLOCK|WIZARD	false	
+Mending	BARD|CLERIC|DRUID|SORCERER|WIZARD	false	
+Message	BARD|DRUID|SORCERER|WIZARD	false	
+Mind Sliver	SORCERER|WARLOCK|WIZARD	false	INT
+Minor Illusion	BARD|SORCERER|WARLOCK|WIZARD	false	
+Poison Spray	DRUID|SORCERER|WARLOCK|WIZARD	true	
+Prestidigitation	BARD|SORCERER|WARLOCK|WIZARD	false	
+Produce Flame	DRUID	true	
+Ray of Frost	SORCERER|WIZARD	true	
+Resistance	CLERIC|DRUID	false	
+Sacred Flame	CLERIC	false	DEX
+Shillelagh	DRUID	false	
+Shocking Grasp	SORCERER|WIZARD	true	
+Sorcerous Burst	SORCERER	true	
+Spare the Dying	CLERIC|DRUID	false	
+Starry Wisp	BARD|DRUID	true	
+Thaumaturgy	CLERIC	false	
+Thorn Whip	DRUID	true	
+Thunderclap	BARD|DRUID|SORCERER|WARLOCK|WIZARD	false	CON
+Toll the Dead	CLERIC|WARLOCK|WIZARD	false	WIS
+True Strike	BARD|SORCERER|WARLOCK|WIZARD	true	
+Vicious Mockery	BARD	false	WIS
+Word of Radiance	CLERIC	false	CON
+Alarm	RANGER|WIZARD	false	
+Animal Friendship	BARD|DRUID|RANGER	false	WIS
+Arms of Hadar	WARLOCK	false	STR
+Bane	BARD|CLERIC|WARLOCK	false	CHA
+Bless	CLERIC|PALADIN	false	
+Burning Hands	SORCERER|WIZARD	false	DEX
+Charm Person	BARD|DRUID|SORCERER|WARLOCK|WIZARD	false	WIS
+Chromatic Orb	SORCERER	true	
+Color Spray	BARD|SORCERER|WIZARD	false	CON
+Command	BARD|CLERIC|PALADIN	false	WIS
+Compelled Duel	PALADIN	false	WIS
+Comprehend Languages	BARD|SORCERER|WARLOCK|WIZARD	false	
+Create or Destroy Water	CLERIC|DRUID	false	
+Cure Wounds	BARD|CLERIC|DRUID|PALADIN|RANGER	false	
+Detect Evil and Good	CLERIC|PALADIN	false	
+Detect Magic	BARD|CLERIC|DRUID|PALADIN|RANGER|SORCERER|WARLOCK|WIZARD	false	
+Detect Poison and Disease	CLERIC|DRUID|PALADIN|RANGER	false	
+Disguise Self	BARD|SORCERER|WIZARD	false	
+Dissonant Whispers	BARD	false	WIS
+Divine Favor	PALADIN	false	
+Divine Smite	PALADIN	false	
+Ensnaring Strike	RANGER	false	STR
+Entangle	DRUID|RANGER	false	STR
+Expeditious Retreat	SORCERER|WARLOCK|WIZARD	false	
+Faerie Fire	BARD|DRUID	false	DEX
+False Life	SORCERER|WIZARD	false	
+Feather Fall	BARD|SORCERER|WIZARD	false	
+Find Familiar	WIZARD	false	
+Fog Cloud	DRUID|RANGER|SORCERER|WIZARD	false	
+Goodberry	DRUID|RANGER	false	
+Grease	SORCERER|WIZARD	false	DEX
+Guiding Bolt	CLERIC	true	
+Healing Word	BARD|CLERIC|DRUID	false	
+Hellish Rebuke	WARLOCK	false	DEX
+Heroism	BARD|PALADIN	false	
+Hex	WARLOCK	false	
+Hunter's Mark	RANGER	false	
+Ice Knife	DRUID|SORCERER	true	DEX
+Identify	BARD|WIZARD	false	
+Illusory Script	BARD|WARLOCK|WIZARD	false	
+Inflict Wounds	CLERIC	false	CON
+Jump	DRUID|RANGER|SORCERER|WIZARD	false	
+Longstrider	BARD|DRUID|RANGER|WIZARD	false	
+Mage Armor	SORCERER|WIZARD	false	
+Magic Missile	SORCERER|WIZARD	false	
+Protection from Evil and Good	CLERIC|DRUID|PALADIN|WARLOCK|WIZARD	false	
+Purify Food and Drink	CLERIC|DRUID|PALADIN	false	
+Ray of Sickness	SORCERER	true	
+Sanctuary	CLERIC	false	WIS
+Searing Smite	PALADIN	false	CON
+Shield	SORCERER|WIZARD	false	
+Shield of Faith	CLERIC|PALADIN	false	
+Silent Image	BARD|SORCERER|WIZARD	false	
+Sleep	BARD|SORCERER|WIZARD	false	WIS
+Speak with Animals	BARD|DRUID|RANGER|WARLOCK	false	
+Tasha's Hideous Laughter	BARD|WARLOCK	false	WIS
+Tenser's Floating Disk	WIZARD	false	
+Thunderwave	BARD|DRUID|SORCERER|WIZARD	false	CON
+Unseen Servant	BARD|WARLOCK|WIZARD	false	
+Witch Bolt	SORCERER|WARLOCK|WIZARD	true	
+Aid	BARD|CLERIC|DRUID|PALADIN|RANGER	false	
+Alter Self	SORCERER|WIZARD	false	
+Arcane Vigor	SORCERER|WIZARD	false	
+Blindness/Deafness	BARD|CLERIC|SORCERER|WIZARD	false	CON
+Blur	SORCERER|WIZARD	false	
+Calm Emotions	BARD|CLERIC	false	CHA
+Cloud of Daggers	BARD|SORCERER|WARLOCK|WIZARD	false	
+Crown of Madness	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Darkness	SORCERER|WARLOCK|WIZARD	false	
+Darkvision	DRUID|RANGER|SORCERER|WIZARD	false	
+Detect Thoughts	BARD|SORCERER|WIZARD	false	WIS
+Dragon's Breath	SORCERER	false	DEX
+Enhance Ability	BARD|CLERIC|DRUID|RANGER|SORCERER|WIZARD	false	
+Enlarge/Reduce	BARD|DRUID|SORCERER|WIZARD	false	CON
+Flame Blade	DRUID|SORCERER	true	
+Flaming Sphere	DRUID|SORCERER|WIZARD	false	DEX
+Gust of Wind	DRUID|RANGER|SORCERER|WIZARD	false	STR
+Hold Person	BARD|CLERIC|DRUID|SORCERER|WARLOCK|WIZARD	false	WIS
+Invisibility	BARD|SORCERER|WARLOCK|WIZARD	false	
+Knock	BARD|SORCERER|WIZARD	false	
+Lesser Restoration	BARD|CLERIC|DRUID|PALADIN|RANGER	false	
+Levitate	SORCERER|WIZARD	false	CON
+Magic Weapon	PALADIN|RANGER|SORCERER|WIZARD	false	
+Mind Spike	SORCERER|WARLOCK	false	WIS
+Mirror Image	BARD|SORCERER|WARLOCK|WIZARD	false	
+Misty Step	SORCERER|WARLOCK|WIZARD	false	
+Pass without Trace	DRUID|RANGER	false	
+Phantasmal Force	BARD|SORCERER	false	INT
+Ray of Enfeeblement	WARLOCK|WIZARD	false	CON
+Scorching Ray	SORCERER|WIZARD	true	
+See Invisibility	BARD|SORCERER|WIZARD	false	
+Shatter	BARD|SORCERER|WIZARD	false	CON
+Spider Climb	SORCERER|WARLOCK|WIZARD	false	
+Suggestion	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Web	SORCERER|WIZARD	false	DEX
+Blink	SORCERER|WIZARD	false	
+Clairvoyance	BARD|CLERIC|SORCERER|WIZARD	false	
+Counterspell	SORCERER|WARLOCK|WIZARD	false	CON
+Daylight	CLERIC|DRUID|PALADIN|RANGER|SORCERER	false	
+Dispel Magic	BARD|CLERIC|DRUID|PALADIN|RANGER|SORCERER|WARLOCK|WIZARD	false	
+Fear	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Fireball	SORCERER|WIZARD	false	DEX
+Fly	SORCERER|WARLOCK|WIZARD	false	
+Gaseous Form	SORCERER|WARLOCK|WIZARD	false	
+Haste	SORCERER|WIZARD	false	
+Hunger of Hadar	WARLOCK	false	DEX
+Hypnotic Pattern	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Lightning Bolt	SORCERER|WIZARD	false	DEX
+Major Image	BARD|SORCERER|WARLOCK|WIZARD	false	
+Protection from Energy	CLERIC|DRUID|RANGER|SORCERER|WIZARD	false	
+Sending	BARD|CLERIC|WIZARD	false	
+Sleet Storm	DRUID|SORCERER|WIZARD	false	DEX
+Slow	BARD|SORCERER|WIZARD	false	WIS
+Stinking Cloud	BARD|SORCERER|WIZARD	false	CON
+Tongues	BARD|CLERIC|SORCERER|WARLOCK|WIZARD	false	
+Vampiric Touch	SORCERER|WARLOCK|WIZARD	true	
+Water Breathing	DRUID|RANGER|SORCERER|WIZARD	false	
+Water Walk	CLERIC|DRUID|RANGER|SORCERER	false	
+Arcane Eye	WIZARD	false	
+Banishment	CLERIC|PALADIN|SORCERER|WARLOCK|WIZARD	false	CHA
+Blight	DRUID|SORCERER|WARLOCK|WIZARD	false	CON
+Charm Monster	BARD|DRUID|SORCERER|WARLOCK	false	WIS
+Confusion	BARD|DRUID|SORCERER|WIZARD	false	WIS
+Dimension Door	BARD|SORCERER|WARLOCK|WIZARD	false	
+Dominate Beast	DRUID|RANGER|SORCERER	false	WIS
+Evard's Black Tentacles	WIZARD	false	STR
+Fire Shield	DRUID|SORCERER|WIZARD	false	
+Freedom of Movement	BARD|CLERIC|DRUID|RANGER	false	
+Greater Invisibility	BARD|SORCERER|WIZARD	false	
+Ice Storm	DRUID|SORCERER|WIZARD	false	DEX
+Polymorph	BARD|DRUID|SORCERER|WIZARD	false	WIS
+Stoneskin	DRUID|RANGER|SORCERER|WIZARD	false	
+Summon Aberration	WARLOCK|WIZARD	false	
+Summon Construct	WIZARD	false	
+Vitriolic Sphere	SORCERER	false	DEX
+Wall of Fire	DRUID|SORCERER|WIZARD	false	DEX
+Animate Objects	BARD|SORCERER|WIZARD	false	
+Bigby's Hand	SORCERER	true	STR|DEX
+Cloudkill	SORCERER|WIZARD	false	CON
+Cone of Cold	DRUID|SORCERER|WIZARD	false	CON
+Creation	SORCERER|WIZARD	false	
+Dominate Person	BARD|SORCERER|WIZARD	false	WIS
+Greater Restoration	BARD|CLERIC|DRUID|PALADIN|RANGER	false	
+Hold Monster	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Insect Plague	CLERIC|DRUID|SORCERER	false	CON
+Legend Lore	BARD|CLERIC|WIZARD	false	
+Rary's Telepathic Bond	BARD	false	
+Seeming	BARD|SORCERER|WIZARD	false	CHA
+Summon Dragon	WIZARD	false	
+Synaptic Static	BARD|SORCERER|WARLOCK|WIZARD	false	INT
+Telekinesis	SORCERER|WIZARD	false	STR
+Teleportation Circle	BARD|SORCERER|WARLOCK|WIZARD	false	
+Wall of Force	WIZARD	false	
+Wall of Stone	DRUID|SORCERER|WIZARD	false	DEX
+Arcane Gate	SORCERER|WARLOCK|WIZARD	false	
+Chain Lightning	SORCERER|WIZARD	false	DEX
+Circle of Death	SORCERER|WARLOCK|WIZARD	false	CON
+Disintegrate	SORCERER|WIZARD	false	DEX
+Eyebite	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Flesh to Stone	DRUID|SORCERER|WIZARD	false	CON
+Globe of Invulnerability	SORCERER|WIZARD	false	
+Mass Suggestion	BARD|SORCERER|WIZARD	false	WIS
+Move Earth	DRUID|SORCERER|WIZARD	false	
+Otiluke's Freezing Sphere	SORCERER	false	CON
+Sunbeam	CLERIC|DRUID|SORCERER|WIZARD	false	CON
+True Seeing	BARD|CLERIC|SORCERER|WARLOCK|WIZARD	false	
+Delayed Blast Fireball	SORCERER|WIZARD	false	DEX
+Etherealness	BARD|CLERIC|SORCERER|WARLOCK|WIZARD	false	
+Finger of Death	SORCERER|WARLOCK|WIZARD	false	CON
+Fire Storm	CLERIC|DRUID|SORCERER	false	DEX
+Plane Shift	CLERIC|DRUID|SORCERER|WARLOCK|WIZARD	false	
+Prismatic Spray	BARD|SORCERER|WIZARD	false	DEX|CON|WIS
+Reverse Gravity	DRUID|SORCERER|WIZARD	false	DEX
+Teleport	BARD|SORCERER|WIZARD	false	
+Demiplane	SORCERER|WARLOCK|WIZARD	false	
+Dominate Monster	BARD|SORCERER|WARLOCK|WIZARD	false	WIS
+Earthquake	CLERIC|DRUID|SORCERER	false	DEX
+Incendiary Cloud	DRUID|SORCERER|WIZARD	false	DEX
+Power Word Stun	BARD|SORCERER|WARLOCK|WIZARD	false	CON
+Sunburst	CLERIC|DRUID|SORCERER|WIZARD	false	CON
+Gate	CLERIC|SORCERER|WARLOCK|WIZARD	false	
+Meteor Swarm	SORCERER|WIZARD	false	DEX
+Power Word Kill	BARD|SORCERER|WARLOCK|WIZARD	false	
+Time Stop	SORCERER|WIZARD	false	
+Wish	SORCERER|WIZARD	false	

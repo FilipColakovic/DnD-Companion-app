@@ -37,7 +37,76 @@ public final class SpellRepositoryChecks {
                     entry.details().equals(SpellDetails.forSpell(spell)),
                     "UI details use repository");
             check(entry.reference().equals(spell.reference()), "Reference URLs use repository");
+            check(
+                    !entry.profile().classes().isEmpty()
+                            && entry.profile()
+                                            .classes()
+                                            .contains(
+                                                    dndcompanion.domain.character.ClassId.SORCERER)
+                                    == entry.sorcererSpell(),
+                    "Every spell has structured class membership consistent with the compatibility"
+                            + " flag");
         }
+        check(
+                repository
+                                .require("Suggestion")
+                                .profile()
+                                .saves()
+                                .equals(
+                                        java.util.Set.of(
+                                                dndcompanion.domain.character.CharacterSheet.Ability
+                                                        .WIS))
+                        && !repository.require("Suggestion").profile().attack(),
+                "Suggestion requires only a Wisdom save");
+        check(
+                repository
+                        .require("Enlarge/Reduce")
+                        .profile()
+                        .saves()
+                        .equals(
+                                java.util.Set.of(
+                                        dndcompanion.domain.character.CharacterSheet.Ability.CON)),
+                "Enlarge/Reduce's strength advantage does not invent a Strength save");
+        check(
+                repository
+                        .require("Slow")
+                        .profile()
+                        .saves()
+                        .equals(
+                                java.util.Set.of(
+                                        dndcompanion.domain.character.CharacterSheet.Ability.WIS)),
+                "Slow's Dexterity penalty does not invent a Dexterity save");
+        check(
+                repository.require("Fire Bolt").profile().attack()
+                        && repository.require("Fire Bolt").profile().saves().isEmpty(),
+                "Attack-only profile");
+        for (String name :
+                List.of(
+                        "Blade Ward",
+                        "Friends",
+                        "Mind Sliver",
+                        "Witch Bolt",
+                        "Arcane Vigor",
+                        "Cloud of Daggers",
+                        "Crown of Madness",
+                        "Summon Aberration",
+                        "Synaptic Static",
+                        "Arcane Gate",
+                        "Toll the Dead"))
+            check(
+                    repository
+                            .require(name)
+                            .profile()
+                            .classes()
+                            .contains(dndcompanion.domain.character.ClassId.WIZARD),
+                    "PHB-only Wizard membership retained: " + name);
+        check(
+                repository
+                        .require("Toll the Dead")
+                        .profile()
+                        .classes()
+                        .contains(dndcompanion.domain.character.ClassId.CLERIC),
+                "PHB Cleric membership retained");
         if (args.length > 0 && args[0].equals("--bundled-only")) {
             System.out.println(
                     "Passed: bundled spell database loads outside the project directory from a"
@@ -102,7 +171,7 @@ public final class SpellRepositoryChecks {
             expectFailure(copy, "Unsupported schemas are rejected");
             try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + copy);
                     Statement statement = connection.createStatement()) {
-                statement.execute("PRAGMA user_version=1");
+                statement.execute("PRAGMA user_version=2");
                 statement.executeUpdate("DELETE FROM spells");
             }
             expectFailure(copy, "Empty catalogs are rejected");
